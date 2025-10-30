@@ -17,10 +17,10 @@ type HistoryModel struct {
 	historyService *app.HistoryService
 
 	// History entries
-	entries        []*repository.HistoryEntry
-	selectedIndex  int
-	loading        bool
-	errorMsg       string
+	entries       []*repository.HistoryEntry
+	selectedIndex int
+	loading       bool
+	errorMsg      string
 
 	// UI dimensions
 	width  int

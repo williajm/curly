@@ -25,10 +25,10 @@ type DatabaseConfig struct {
 
 // HTTPConfig holds HTTP client configuration
 type HTTPConfig struct {
-	Timeout            time.Duration `mapstructure:"timeout"`
-	MaxRedirects       int           `mapstructure:"max_redirects"`
-	FollowRedirects    bool          `mapstructure:"follow_redirects"`
-	InsecureSkipTLS    bool          `mapstructure:"insecure_skip_tls"`
+	Timeout         time.Duration `mapstructure:"timeout"`
+	MaxRedirects    int           `mapstructure:"max_redirects"`
+	FollowRedirects bool          `mapstructure:"follow_redirects"`
+	InsecureSkipTLS bool          `mapstructure:"insecure_skip_tls"`
 }
 
 // UIConfig holds UI preferences

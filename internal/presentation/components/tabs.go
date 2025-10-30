@@ -105,7 +105,7 @@ func RenderBox(title string, content string, width, height int) string {
 
 	// Create box style with dimensions
 	boxStyle := styles.BoxStyle.
-		Width(width - 4). // Account for border and padding
+		Width(width - 4).  // Account for border and padding
 		Height(height - 2) // Account for border
 
 	boxContent := content

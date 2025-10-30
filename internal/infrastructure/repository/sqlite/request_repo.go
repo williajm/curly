@@ -365,9 +365,9 @@ func deserializeAuthConfig(authType, configJSON string) (domain.AuthConfig, erro
 		return domain.NewBearerAuth(config.Token), nil
 	case "apikey":
 		var config struct {
-			Key      string                  `json:"key"`
-			Value    string                  `json:"value"`
-			Location domain.APIKeyLocation   `json:"location"`
+			Key      string                `json:"key"`
+			Value    string                `json:"value"`
+			Location domain.APIKeyLocation `json:"location"`
 		}
 		if err := json.Unmarshal([]byte(configJSON), &config); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal apikey auth: %w", err)
