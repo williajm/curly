@@ -1,0 +1,81 @@
+# Curly Configuration Example
+# Copy this file to ~/.config/curly/config.yaml and customize as needed
+
+# Database configuration
+database:
+  # Path to SQLite database file
+  # Default: ~/.local/share/curly/curly.db
+  path: ~/.local/share/curly/curly.db
+
+# HTTP client settings
+http:
+  # Request timeout duration
+  # Default: 30s
+  timeout: 30s
+
+  # Maximum number of redirects to follow
+  # Default: 10
+  max_redirects: 10
+
+  # Whether to automatically follow redirects
+  # Default: true
+  follow_redirects: true
+
+  # Skip TLS certificate verification (use with caution)
+  # Default: false
+  insecure_skip_tls: false
+
+# UI preferences
+# NOTE: UI customization options are planned for Phase 2 and not yet implemented
+ui:
+  # Color theme: "dark" or "light"
+  # Default: dark
+  # Status: PLANNED FOR PHASE 2
+  theme: dark
+
+  # Enable syntax highlighting for response bodies
+  # Default: true
+  # Status: PLANNED FOR PHASE 2
+  syntax_highlighting: true
+
+  # Show response time in the UI
+  # Default: true
+  # Status: PLANNED FOR PHASE 2
+  show_response_time: true
+
+  # Default tab to show on startup: "request", "response", or "history"
+  # Default: request
+  # Status: PLANNED FOR PHASE 2
+  default_tab: request
+
+# History management settings
+# NOTE: Advanced history management features are planned for Phase 2
+history:
+  # Maximum number of history entries to keep
+  # Default: 1000
+  # Status: PLANNED FOR PHASE 2 (currently unlimited)
+  max_entries: 1000
+
+  # Automatically cleanup old history entries
+  # Default: true
+  # Status: PLANNED FOR PHASE 2
+  auto_cleanup: true
+
+  # Number of days after which to cleanup old entries
+  # Default: 90
+  # Status: PLANNED FOR PHASE 2
+  cleanup_after_days: 90
+
+# Logging configuration
+logging:
+  # Enable logging to file
+  # Default: true
+  enabled: true
+
+  # Path to log file
+  # Default: ~/.cache/curly/curly.log
+  path: ~/.cache/curly/curly.log
+
+  # Log level: "debug", "info", "warn", "error"
+  # Default: info
+  level: info
