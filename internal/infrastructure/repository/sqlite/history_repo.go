@@ -95,7 +95,7 @@ func (r *HistoryRepository) FindAll(ctx context.Context, limit int) ([]*reposito
 		ORDER BY executed_at DESC
 	`
 
-	// Add LIMIT clause if specified
+	// Add LIMIT clause if specified.
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
@@ -104,7 +104,7 @@ func (r *HistoryRepository) FindAll(ctx context.Context, limit int) ([]*reposito
 	if err != nil {
 		return nil, fmt.Errorf("failed to query history: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return scanHistoryEntries(rows)
 }
@@ -118,7 +118,7 @@ func (r *HistoryRepository) FindByRequestID(ctx context.Context, requestID strin
 		ORDER BY executed_at DESC
 	`
 
-	// Add LIMIT clause if specified
+	// Add LIMIT clause if specified.
 	if limit > 0 {
 		query += fmt.Sprintf(" LIMIT %d", limit)
 	}
@@ -127,7 +127,7 @@ func (r *HistoryRepository) FindByRequestID(ctx context.Context, requestID strin
 	if err != nil {
 		return nil, fmt.Errorf("failed to query history by request ID: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	return scanHistoryEntries(rows)
 }

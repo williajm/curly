@@ -4,8 +4,8 @@ import (
 	"strings"
 )
 
-// RenderHelp renders the help screen with keyboard shortcuts
-func RenderHelp(width, height int) string {
+// RenderHelp renders the help screen with keyboard shortcuts.
+func RenderHelp(_, _ int) string {
 	var sections []string
 
 	sections = append(sections, "")
@@ -14,7 +14,7 @@ func RenderHelp(width, height int) string {
 	sections = append(sections, "════════════════════════════════════════════════════════════")
 	sections = append(sections, "")
 
-	// Global shortcuts
+	// Global shortcuts.
 	sections = append(sections, "GLOBAL SHORTCUTS:")
 	sections = append(sections, "")
 	sections = append(sections, "  q, Ctrl+C     Quit application")
@@ -26,7 +26,7 @@ func RenderHelp(width, height int) string {
 	sections = append(sections, "  3             Jump to History tab")
 	sections = append(sections, "")
 
-	// Request tab shortcuts
+	// Request tab shortcuts.
 	sections = append(sections, "REQUEST TAB:")
 	sections = append(sections, "")
 	sections = append(sections, "  Tab           Move to next field")
@@ -38,7 +38,7 @@ func RenderHelp(width, height int) string {
 	sections = append(sections, "  ←/→ or h/l    Change auth type")
 	sections = append(sections, "")
 
-	// Response tab shortcuts
+	// Response tab shortcuts.
 	sections = append(sections, "RESPONSE TAB:")
 	sections = append(sections, "")
 	sections = append(sections, "  h             Toggle between headers and body view")
@@ -46,7 +46,7 @@ func RenderHelp(width, height int) string {
 	sections = append(sections, "  PgUp/PgDn     Page up/down")
 	sections = append(sections, "")
 
-	// History tab shortcuts
+	// History tab shortcuts.
 	sections = append(sections, "HISTORY TAB:")
 	sections = append(sections, "")
 	sections = append(sections, "  ↑/↓ or k/j    Navigate history entries")

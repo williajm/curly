@@ -27,7 +27,7 @@ func NewAuthService(logger *slog.Logger) *AuthService {
 }
 
 // CreateAuth creates an authentication configuration from the provided type and credentials.
-// Supported types: "none", "basic", "bearer", "apikey"
+// Supported types: "none", "basic", "bearer", "apikey".
 // Returns an error if the auth type is not supported or credentials are invalid.
 func (s *AuthService) CreateAuth(authType string, credentials map[string]string) (domain.AuthConfig, error) {
 	authType = strings.ToLower(strings.TrimSpace(authType))
@@ -80,7 +80,7 @@ func (s *AuthService) CreateAuth(authType string, credentials map[string]string)
 			return nil, fmt.Errorf("api key auth requires 'key', 'value', and 'location' credentials")
 		}
 
-		// Parse location
+		// Parse location.
 		var apiKeyLocation domain.APIKeyLocation
 		switch strings.ToLower(location) {
 		case "header":
@@ -146,7 +146,7 @@ func (s *AuthService) ApplyAuth(auth domain.AuthConfig, req *http.Request) error
 		"url", req.URL.String(),
 	)
 
-	// Validate before applying
+	// Validate before applying.
 	if err := auth.Validate(); err != nil {
 		s.logger.Warn("cannot apply invalid auth",
 			"type", auth.Type(),
@@ -155,7 +155,7 @@ func (s *AuthService) ApplyAuth(auth domain.AuthConfig, req *http.Request) error
 		return fmt.Errorf("invalid auth config: %w", err)
 	}
 
-	// Apply auth to request
+	// Apply auth to request.
 	if err := auth.Apply(req); err != nil {
 		s.logger.Error("failed to apply auth to request",
 			"type", auth.Type(),

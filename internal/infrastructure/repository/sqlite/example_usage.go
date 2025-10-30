@@ -10,14 +10,14 @@ Example 1: Opening a database with migrations
 		"github.com/williajm/curly/internal/infrastructure/repository/sqlite"
 	)
 
-	// Use default config (database at ~/.local/share/curly/curly.db)
+	// Use default config (database at ~/.local/share/curly/curly.db).
 	db, err := sqlite.Open(sqlite.DefaultConfig())
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Or use custom config
+	// Or use custom config.
 	config := &sqlite.Config{
 		Path:           "/custom/path/to/database.db",
 		MigrationsPath: "migrations",
@@ -36,17 +36,17 @@ Example 2: Creating and using a request repository
 		"github.com/williajm/curly/internal/infrastructure/repository/sqlite"
 	)
 
-	// Open database
+	// Open database.
 	db, err := sqlite.Open(sqlite.DefaultConfig())
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Create repository
+	// Create repository.
 	repo := sqlite.NewRequestRepository(db)
 
-	// Create a new request
+	// Create a new request.
 	req := domain.NewRequest()
 	req.Name = "Get Users"
 	req.Method = "GET"
@@ -54,33 +54,33 @@ Example 2: Creating and using a request repository
 	req.SetHeader("Accept", "application/json")
 	req.SetAuth(domain.NewBearerAuth("my-token"))
 
-	// Save to database
+	// Save to database.
 	ctx := context.Background()
 	if err := repo.Create(ctx, req); err != nil {
 		log.Fatalf("failed to create request: %v", err)
 	}
 
-	// Retrieve by ID
+	// Retrieve by ID.
 	retrieved, err := repo.FindByID(ctx, req.ID)
 	if err != nil {
 		log.Fatalf("failed to find request: %v", err)
 	}
 
-	// Update request
+	// Update request.
 	retrieved.Name = "Get All Users"
 	retrieved.SetHeader("Content-Type", "application/json")
 	if err := repo.Update(ctx, retrieved); err != nil {
 		log.Fatalf("failed to update request: %v", err)
 	}
 
-	// Get all requests
+	// Get all requests.
 	allRequests, err := repo.FindAll(ctx)
 	if err != nil {
 		log.Fatalf("failed to find all requests: %v", err)
 	}
 	fmt.Printf("Found %d requests\n", len(allRequests))
 
-	// Delete request
+	// Delete request.
 	if err := repo.Delete(ctx, req.ID); err != nil {
 		log.Fatalf("failed to delete request: %v", err)
 	}
@@ -95,17 +95,17 @@ Example 3: Using the history repository
 		"github.com/williajm/curly/internal/infrastructure/repository/sqlite"
 	)
 
-	// Open database
+	// Open database.
 	db, err := sqlite.Open(sqlite.DefaultConfig())
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Create history repository
+	// Create history repository.
 	historyRepo := sqlite.NewHistoryRepository(db)
 
-	// Save a successful execution
+	// Save a successful execution.
 	entry := &repository.HistoryEntry{
 		ID:              uuid.New().String(),
 		RequestID:       "some-request-id",
@@ -123,7 +123,7 @@ Example 3: Using the history repository
 		log.Fatalf("failed to save history entry: %v", err)
 	}
 
-	// Save a failed execution
+	// Save a failed execution.
 	failedEntry := &repository.HistoryEntry{
 		ID:              uuid.New().String(),
 		RequestID:       "some-request-id",
@@ -140,21 +140,21 @@ Example 3: Using the history repository
 		log.Fatalf("failed to save failed entry: %v", err)
 	}
 
-	// Get history for a specific request (latest 10 entries)
+	// Get history for a specific request (latest 10 entries).
 	requestHistory, err := historyRepo.FindByRequestID(ctx, "some-request-id", 10)
 	if err != nil {
 		log.Fatalf("failed to find history: %v", err)
 	}
 	fmt.Printf("Found %d history entries\n", len(requestHistory))
 
-	// Get all history (latest 100 entries)
+	// Get all history (latest 100 entries).
 	allHistory, err := historyRepo.FindAll(ctx, 100)
 	if err != nil {
 		log.Fatalf("failed to find all history: %v", err)
 	}
 	fmt.Printf("Found %d total history entries\n", len(allHistory))
 
-	// Clean up old history (older than 90 days)
+	// Clean up old history (older than 90 days).
 	cutoff := time.Now().AddDate(0, 0, -90).Format(time.RFC3339)
 	deleted, err := historyRepo.DeleteOlderThan(ctx, cutoff)
 	if err != nil {
@@ -175,23 +175,23 @@ Example 4: Using repositories together with HTTP client
 		"github.com/williajm/curly/internal/infrastructure/repository/sqlite"
 	)
 
-	// Open database
+	// Open database.
 	db, err := sqlite.Open(sqlite.DefaultConfig())
 	if err != nil {
 		log.Fatalf("failed to open database: %v", err)
 	}
 	defer db.Close()
 
-	// Create repositories
+	// Create repositories.
 	requestRepo := sqlite.NewRequestRepository(db)
 	historyRepo := sqlite.NewHistoryRepository(db)
 
-	// Create HTTP client
+	// Create HTTP client.
 	httpClient := http.NewClient(http.DefaultConfig())
 
 	ctx := context.Background()
 
-	// Create and save a request
+	// Create and save a request.
 	req := domain.NewRequest()
 	req.Name = "Get GitHub User"
 	req.Method = "GET"
@@ -202,10 +202,10 @@ Example 4: Using repositories together with HTTP client
 		log.Fatalf("failed to save request: %v", err)
 	}
 
-	// Execute the request
+	// Execute the request.
 	resp, err := httpClient.Execute(ctx, req)
 
-	// Save execution to history
+	// Save execution to history.
 	entry := &repository.HistoryEntry{
 		ID:             uuid.New().String(),
 		RequestID:      req.ID,
@@ -214,10 +214,10 @@ Example 4: Using repositories together with HTTP client
 	}
 
 	if err != nil {
-		// Request failed
+		// Request failed.
 		entry.Error = err.Error()
 	} else {
-		// Request succeeded
+		// Request succeeded.
 		entry.StatusCode = resp.StatusCode
 		entry.Status = resp.Status
 		headersJSON, _ := json.Marshal(resp.Headers)
@@ -229,7 +229,7 @@ Example 4: Using repositories together with HTTP client
 		log.Fatalf("failed to save history: %v", err)
 	}
 
-	// View execution history for this request
+	// View execution history for this request.
 	history, err := historyRepo.FindByRequestID(ctx, req.ID, 0)
 	if err != nil {
 		log.Fatalf("failed to get history: %v", err)
@@ -254,7 +254,7 @@ Example 5: Using in-memory database for testing
 	)
 
 	func TestMyFeature(t *testing.T) {
-		// Use in-memory database for testing
+		// Use in-memory database for testing.
 		config := &sqlite.Config{
 			Path:           ":memory:",
 			MigrationsPath: "../../../../migrations",
@@ -266,22 +266,22 @@ Example 5: Using in-memory database for testing
 		}
 		defer db.Close()
 
-		// Create repository
+		// Create repository.
 		repo := sqlite.NewRequestRepository(db)
 
-		// Test CRUD operations
+		// Test CRUD operations.
 		ctx := context.Background()
 		req := domain.NewRequest()
 		req.Name = "Test Request"
 		req.Method = "GET"
 		req.URL = "https://api.example.com/test"
 
-		// Create
+		// Create.
 		if err := repo.Create(ctx, req); err != nil {
 			t.Fatalf("failed to create request: %v", err)
 		}
 
-		// Read
+		// Read.
 		retrieved, err := repo.FindByID(ctx, req.ID)
 		if err != nil {
 			t.Fatalf("failed to find request: %v", err)
@@ -291,13 +291,13 @@ Example 5: Using in-memory database for testing
 			t.Errorf("expected name %s, got %s", req.Name, retrieved.Name)
 		}
 
-		// Update
+		// Update.
 		retrieved.Name = "Updated Test Request"
 		if err := repo.Update(ctx, retrieved); err != nil {
 			t.Fatalf("failed to update request: %v", err)
 		}
 
-		// Verify update
+		// Verify update.
 		updated, err := repo.FindByID(ctx, req.ID)
 		if err != nil {
 			t.Fatalf("failed to find updated request: %v", err)
@@ -307,12 +307,12 @@ Example 5: Using in-memory database for testing
 			t.Errorf("expected updated name, got %s", updated.Name)
 		}
 
-		// Delete
+		// Delete.
 		if err := repo.Delete(ctx, req.ID); err != nil {
 			t.Fatalf("failed to delete request: %v", err)
 		}
 
-		// Verify deletion
+		// Verify deletion.
 		_, err = repo.FindByID(ctx, req.ID)
 		if err != sqlite.ErrNotFound {
 			t.Errorf("expected ErrNotFound, got %v", err)

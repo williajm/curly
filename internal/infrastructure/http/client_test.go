@@ -62,25 +62,25 @@ func TestExecute_AllHTTPMethods(t *testing.T) {
 
 	for _, method := range methods {
 		t.Run(method, func(t *testing.T) {
-			// Create test server that echoes the method
+			// Create test server that echoes the method.
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				if r.Method != method {
 					t.Errorf("expected method %s, got %s", method, r.Method)
 				}
 				w.WriteHeader(http.StatusOK)
-				fmt.Fprintf(w, "Method: %s", method)
+				_, _ = fmt.Fprintf(w, "Method: %s", method)
 			}))
 			defer server.Close()
 
-			// Create client and request
+			// Create client and request.
 			client := NewClient(nil)
 			req := domain.NewRequestWithMethodAndURL(method, server.URL)
 
-			// Execute request
+			// Execute request.
 			ctx := context.Background()
 			resp, err := client.Execute(ctx, req)
 
-			// Verify response
+			// Verify response.
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
@@ -89,7 +89,7 @@ func TestExecute_AllHTTPMethods(t *testing.T) {
 				t.Errorf("expected status 200, got %d", resp.StatusCode)
 			}
 
-			// HEAD requests don't return a body per HTTP spec
+			// HEAD requests don't return a body per HTTP spec.
 			if method == "HEAD" {
 				if resp.Body != "" {
 					t.Errorf("expected empty body for HEAD request, got %q", resp.Body)
@@ -109,23 +109,23 @@ func TestExecute_BasicAuth(t *testing.T) {
 	expectedUsername := "testuser"
 	expectedPassword := "testpass"
 
-	// Create test server that validates basic auth
+	// Create test server that validates basic auth.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "No auth provided")
+			_, _ = fmt.Fprint(w, "No auth provided")
 			return
 		}
 
 		if username != expectedUsername || password != expectedPassword {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Invalid credentials")
+			_, _ = fmt.Fprint(w, "Invalid credentials")
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "Authenticated")
+		_, _ = fmt.Fprint(w, "Authenticated")
 	}))
 	defer server.Close()
 
@@ -183,24 +183,24 @@ func TestExecute_BasicAuth(t *testing.T) {
 func TestExecute_BearerAuth(t *testing.T) {
 	expectedToken := "secret-token-12345"
 
-	// Create test server that validates bearer token
+	// Create test server that validates bearer token.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "No token provided")
+			_, _ = fmt.Fprint(w, "No token provided")
 			return
 		}
 
 		expectedAuth := fmt.Sprintf("Bearer %s", expectedToken)
 		if authHeader != expectedAuth {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, "Invalid token")
+			_, _ = fmt.Fprint(w, "Invalid token")
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, "Authenticated")
+		_, _ = fmt.Fprint(w, "Authenticated")
 	}))
 	defer server.Close()
 
@@ -254,17 +254,17 @@ func TestExecute_APIKeyAuth(t *testing.T) {
 	expectedValue := "secret-api-key"
 
 	t.Run("header location", func(t *testing.T) {
-		// Create test server that validates API key in header
+		// Create test server that validates API key in header.
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiKey := r.Header.Get(expectedKey)
 			if apiKey != expectedValue {
 				w.WriteHeader(http.StatusUnauthorized)
-				fmt.Fprint(w, "Invalid API key")
+				_, _ = fmt.Fprint(w, "Invalid API key")
 				return
 			}
 
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, "Authenticated")
+			_, _ = fmt.Fprint(w, "Authenticated")
 		}))
 		defer server.Close()
 
@@ -285,17 +285,17 @@ func TestExecute_APIKeyAuth(t *testing.T) {
 	})
 
 	t.Run("query location", func(t *testing.T) {
-		// Create test server that validates API key in query
+		// Create test server that validates API key in query.
 		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			apiKey := r.URL.Query().Get("api_key")
 			if apiKey != expectedValue {
 				w.WriteHeader(http.StatusUnauthorized)
-				fmt.Fprint(w, "Invalid API key")
+				_, _ = fmt.Fprint(w, "Invalid API key")
 				return
 			}
 
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, "Authenticated")
+			_, _ = fmt.Fprint(w, "Authenticated")
 		}))
 		defer server.Close()
 
@@ -318,16 +318,16 @@ func TestExecute_APIKeyAuth(t *testing.T) {
 
 // TestExecute_Headers tests custom header handling.
 func TestExecute_Headers(t *testing.T) {
-	// Create test server that echoes headers
+	// Create test server that echoes headers.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Echo back the custom headers as JSON
+		// Echo back the custom headers as JSON.
 		headers := make(map[string]string)
 		headers["X-Custom-Header"] = r.Header.Get("X-Custom-Header")
 		headers["User-Agent"] = r.Header.Get("User-Agent")
 		headers["Accept"] = r.Header.Get("Accept")
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(headers)
+		_ = json.NewEncoder(w).Encode(headers)
 	}))
 	defer server.Close()
 
@@ -348,7 +348,7 @@ func TestExecute_Headers(t *testing.T) {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	// Verify response headers were received
+	// Verify response headers were received.
 	var receivedHeaders map[string]string
 	if err := json.Unmarshal([]byte(resp.Body), &receivedHeaders); err != nil {
 		t.Fatalf("failed to unmarshal response: %v", err)
@@ -361,7 +361,7 @@ func TestExecute_Headers(t *testing.T) {
 
 // TestExecute_QueryParams tests query parameter handling.
 func TestExecute_QueryParams(t *testing.T) {
-	// Create test server that echoes query parameters
+	// Create test server that echoes query parameters.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		params := make(map[string]string)
 		for key := range r.URL.Query() {
@@ -369,7 +369,7 @@ func TestExecute_QueryParams(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(params)
+		_ = json.NewEncoder(w).Encode(params)
 	}))
 	defer server.Close()
 
@@ -428,7 +428,7 @@ func TestExecute_QueryParams(t *testing.T) {
 
 // TestExecute_RequestBody tests request body handling.
 func TestExecute_RequestBody(t *testing.T) {
-	// Create test server that echoes request body
+	// Create test server that echoes request body.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
@@ -437,7 +437,7 @@ func TestExecute_RequestBody(t *testing.T) {
 		}
 
 		w.Header().Set("Content-Type", r.Header.Get("Content-Type"))
-		w.Write(body)
+		_, _ = w.Write(body)
 	}))
 	defer server.Close()
 
@@ -490,8 +490,8 @@ func TestExecute_RequestBody(t *testing.T) {
 
 // TestExecute_Timeout tests timeout handling.
 func TestExecute_Timeout(t *testing.T) {
-	// Create test server that delays response
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// Create test server that delays response.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		time.Sleep(200 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -559,10 +559,9 @@ func TestExecute_Timeout(t *testing.T) {
 // TestExecute_Redirects tests redirect handling.
 func TestExecute_Redirects(t *testing.T) {
 	redirectCount := 0
-	var server *httptest.Server
 
-	// Create test server that redirects
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// Create test server that redirects.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/redirect" {
 			redirectCount++
 			if redirectCount <= 3 {
@@ -575,7 +574,7 @@ func TestExecute_Redirects(t *testing.T) {
 
 		if r.URL.Path == "/final" {
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprint(w, "Success")
+			_, _ = fmt.Fprint(w, "Success")
 			return
 		}
 
@@ -669,7 +668,7 @@ func TestExecute_ErrorHandling(t *testing.T) {
 	})
 
 	t.Run("invalid method", func(t *testing.T) {
-		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}))
 		defer server.Close()
@@ -714,11 +713,11 @@ func TestExecute_ErrorHandling(t *testing.T) {
 func TestExecute_ResponseMetadata(t *testing.T) {
 	responseBody := "Test response body"
 
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("X-Custom-Header", "CustomValue")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprint(w, responseBody)
+		_, _ = fmt.Fprint(w, responseBody)
 	}))
 	defer server.Close()
 
@@ -734,12 +733,12 @@ func TestExecute_ResponseMetadata(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	// Verify status
+	// Verify status.
 	if resp.StatusCode != http.StatusOK {
 		t.Errorf("expected status 200, got %d", resp.StatusCode)
 	}
 
-	// Verify headers
+	// Verify headers.
 	if resp.GetHeader("Content-Type") != "text/plain" {
 		t.Errorf("expected Content-Type 'text/plain', got %q", resp.GetHeader("Content-Type"))
 	}
@@ -748,18 +747,18 @@ func TestExecute_ResponseMetadata(t *testing.T) {
 		t.Errorf("expected X-Custom-Header 'CustomValue', got %q", resp.GetHeader("X-Custom-Header"))
 	}
 
-	// Verify body
+	// Verify body.
 	if resp.Body != responseBody {
 		t.Errorf("expected body %q, got %q", responseBody, resp.Body)
 	}
 
-	// Verify content length
+	// Verify content length.
 	expectedLength := int64(len(responseBody))
 	if resp.ContentLength != expectedLength {
 		t.Errorf("expected ContentLength %d, got %d", expectedLength, resp.ContentLength)
 	}
 
-	// Verify timing
+	// Verify timing.
 	if resp.Duration <= 0 {
 		t.Error("expected Duration to be positive")
 	}
@@ -768,12 +767,12 @@ func TestExecute_ResponseMetadata(t *testing.T) {
 		t.Errorf("Duration %v should not exceed actual elapsed time %v", resp.Duration, elapsed)
 	}
 
-	// Verify timestamp
+	// Verify timestamp.
 	if resp.Timestamp.IsZero() {
 		t.Error("expected Timestamp to be set")
 	}
 
-	// Verify request ID
+	// Verify request ID.
 	if resp.RequestID != req.ID {
 		t.Errorf("expected RequestID %q, got %q", req.ID, resp.RequestID)
 	}
@@ -796,7 +795,7 @@ func TestExecute_StatusCodes(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(tc.statusCode)
 			}))
 			defer server.Close()

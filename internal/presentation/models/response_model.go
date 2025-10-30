@@ -9,23 +9,23 @@ import (
 	"github.com/williajm/curly/internal/domain"
 )
 
-// ResponseModel represents the response viewer
+// ResponseModel represents the response viewer.
 type ResponseModel struct {
-	// Current response being displayed
+	// Current response being displayed.
 	response *domain.Response
 
-	// Viewport for scrollable content
+	// Viewport for scrollable content.
 	viewport viewport.Model
 
-	// State
+	// State.
 	showingHeaders bool // Toggle between headers and body view
 
-	// UI dimensions
+	// UI dimensions.
 	width  int
 	height int
 }
 
-// NewResponseModel creates a new response viewer model
+// NewResponseModel creates a new response viewer model.
 func NewResponseModel() ResponseModel {
 	vp := viewport.New(80, 20)
 	vp.SetContent("No response yet. Send a request to see the response here.")
@@ -36,29 +36,29 @@ func NewResponseModel() ResponseModel {
 	}
 }
 
-// Init initializes the model
+// Init initializes the model.
 func (m ResponseModel) Init() tea.Cmd {
 	return nil
 }
 
-// Update handles messages and updates the model
+// Update handles messages and updates the model.
 func (m ResponseModel) Update(msg tea.Msg) (ResponseModel, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+		case KeyCtrlC:
 			return m, tea.Quit
 
 		case "h":
-			// Toggle headers/body view
+			// Toggle headers/body view.
 			m.showingHeaders = !m.showingHeaders
 			m.updateViewportContent()
 			return m, nil
 
 		default:
-			// Pass other keys to viewport for scrolling
+			// Pass other keys to viewport for scrolling.
 			m.viewport, cmd = m.viewport.Update(msg)
 		}
 
@@ -70,7 +70,7 @@ func (m ResponseModel) Update(msg tea.Msg) (ResponseModel, tea.Cmd) {
 		m.updateViewportContent()
 
 	case requestSentMsg:
-		// Update response when request completes
+		// Update response when request completes.
 		if msg.err == nil && msg.response != nil {
 			m.response = msg.response
 			m.updateViewportContent()
@@ -80,7 +80,7 @@ func (m ResponseModel) Update(msg tea.Msg) (ResponseModel, tea.Cmd) {
 	return m, cmd
 }
 
-// View renders the response viewer
+// View renders the response viewer.
 func (m ResponseModel) View() string {
 	var sections []string
 
@@ -94,20 +94,20 @@ func (m ResponseModel) View() string {
 		return strings.Join(sections, "\n")
 	}
 
-	// Status line
+	// Status line.
 	statusLine := fmt.Sprintf("Status: %d %s", m.response.StatusCode, m.response.Status)
 	sections = append(sections, statusLine)
 
-	// Timing
+	// Timing.
 	timingLine := fmt.Sprintf("Time: %dms", m.response.DurationMillis())
 	sections = append(sections, timingLine)
 
-	// Content length
+	// Content length.
 	sizeLine := fmt.Sprintf("Size: %d bytes", m.response.ContentLength)
 	sections = append(sections, sizeLine)
 	sections = append(sections, "")
 
-	// View mode indicator
+	// View mode indicator.
 	if m.showingHeaders {
 		sections = append(sections, "═══ Headers ═══")
 		sections = append(sections, m.renderHeaders())
@@ -134,15 +134,15 @@ func (m ResponseModel) renderHeaders() string {
 	return strings.Join(lines, "\n")
 }
 
-// updateViewportContent updates the viewport with current response data
+// updateViewportContent updates the viewport with current response data.
 func (m *ResponseModel) updateViewportContent() {
 	if m.response == nil {
 		m.viewport.SetContent("No response yet. Send a request to see the response here.")
 		return
 	}
 
-	// Content will be formatted in response_view.go
-	// For now, use simple formatting
+	// Content will be formatted in response_view.go.
+	// For now, use simple formatting.
 	content := ""
 	if m.showingHeaders {
 		content = "Headers view"
@@ -153,19 +153,19 @@ func (m *ResponseModel) updateViewportContent() {
 	m.viewport.SetContent(content)
 }
 
-// SetResponse sets the response to display
+// SetResponse sets the response to display.
 func (m *ResponseModel) SetResponse(response *domain.Response) {
 	m.response = response
 	m.showingHeaders = false
 	m.updateViewportContent()
 }
 
-// GetResponse returns the current response
+// GetResponse returns the current response.
 func (m *ResponseModel) GetResponse() *domain.Response {
 	return m.response
 }
 
-// HasResponse returns whether a response is currently loaded
+// HasResponse returns whether a response is currently loaded.
 func (m *ResponseModel) HasResponse() bool {
 	return m.response != nil
 }

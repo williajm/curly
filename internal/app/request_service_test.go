@@ -13,7 +13,12 @@ import (
 	"github.com/williajm/curly/internal/infrastructure/repository"
 )
 
-// MockRequestRepository is a mock implementation of repository.RequestRepository
+// Test constants for repeated test values.
+const (
+	testRequestName = "Test Request"
+)
+
+// MockRequestRepository is a mock implementation of repository.RequestRepository.
 type MockRequestRepository struct {
 	mock.Mock
 }
@@ -49,7 +54,7 @@ func (m *MockRequestRepository) Delete(ctx context.Context, id string) error {
 	return args.Error(0)
 }
 
-// MockHTTPClient is a mock implementation of http.Client
+// MockHTTPClient is a mock implementation of http.Client.
 type MockHTTPClient struct {
 	mock.Mock
 }
@@ -62,7 +67,7 @@ func (m *MockHTTPClient) Execute(ctx context.Context, req *domain.Request) (*dom
 	return args.Get(0).(*domain.Response), args.Error(1)
 }
 
-// MockHistoryRepository is a mock implementation of repository.HistoryRepository
+// MockHistoryRepository is a mock implementation of repository.HistoryRepository.
 type MockHistoryRepository struct {
 	mock.Mock
 }
@@ -160,7 +165,7 @@ func TestCreateRequest_Success(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
 	createdReq, err := service.CreateRequest(context.Background(), req)
 
@@ -179,7 +184,7 @@ func TestCreateRequest_InvalidRequest(t *testing.T) {
 
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
-	// Request with invalid URL
+	// Request with invalid URL.
 	req := domain.NewRequestWithMethodAndURL("GET", "not-a-url")
 
 	createdReq, err := service.CreateRequest(context.Background(), req)
@@ -226,7 +231,7 @@ func TestExecuteRequest_ValidationFails(t *testing.T) {
 
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
-	// Request with invalid URL
+	// Request with invalid URL.
 	req := domain.NewRequestWithMethodAndURL("GET", "invalid-url")
 
 	resp, err := service.ExecuteRequest(context.Background(), req)
@@ -266,9 +271,9 @@ func TestSaveRequest_Create(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
-	// Request doesn't exist, so FindByID returns error
+	// Request doesn't exist, so FindByID returns error.
 	repo.On("FindByID", mock.Anything, req.ID).Return(nil, errors.New("not found"))
 	repo.On("Create", mock.Anything, req).Return(nil)
 
@@ -287,11 +292,11 @@ func TestSaveRequest_Update(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
 	existingReq := req.Clone()
 
-	// Request exists, so FindByID returns it
+	// Request exists, so FindByID returns it.
 	repo.On("FindByID", mock.Anything, req.ID).Return(existingReq, nil)
 	repo.On("Update", mock.Anything, req).Return(nil)
 
@@ -309,7 +314,7 @@ func TestSaveRequest_InvalidRequest(t *testing.T) {
 
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
-	// Invalid request
+	// Invalid request.
 	req := domain.NewRequestWithMethodAndURL("GET", "invalid-url")
 
 	err := service.SaveRequest(context.Background(), req)
@@ -327,7 +332,7 @@ func TestLoadRequest_Success(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	expectedReq := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	expectedReq.Name = "Test Request"
+	expectedReq.Name = testRequestName
 
 	repo.On("FindByID", mock.Anything, expectedReq.ID).Return(expectedReq, nil)
 
@@ -483,7 +488,7 @@ func TestExecuteAndSave_HTTPError(t *testing.T) {
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
 
 	httpClient.On("Execute", mock.Anything, req).Return(nil, errors.New("network error"))
-	// History should still be saved even on error
+	// History should still be saved even on error.
 	historyRepo.On("Save", mock.Anything, mock.AnythingOfType("*repository.HistoryEntry")).Return(nil)
 
 	resp, err := service.ExecuteAndSave(context.Background(), req)
@@ -517,7 +522,7 @@ func TestExecuteAndSave_HistorySaveError(t *testing.T) {
 	httpClient.On("Execute", mock.Anything, req).Return(expectedResp, nil)
 	historyRepo.On("Save", mock.Anything, mock.AnythingOfType("*repository.HistoryEntry")).Return(errors.New("db error"))
 
-	// Should still succeed even if history save fails
+	// Should still succeed even if history save fails.
 	resp, err := service.ExecuteAndSave(context.Background(), req)
 
 	assert.NoError(t, err)
@@ -536,7 +541,7 @@ func TestExecuteAndSave_ValidationError(t *testing.T) {
 
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
-	// Invalid request
+	// Invalid request.
 	req := domain.NewRequestWithMethodAndURL("GET", "invalid-url")
 
 	resp, err := service.ExecuteAndSave(context.Background(), req)
@@ -555,11 +560,11 @@ func TestSaveRequest_CreateError(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
-	// Request doesn't exist
+	// Request doesn't exist.
 	repo.On("FindByID", mock.Anything, req.ID).Return(nil, errors.New("not found"))
-	// But create fails
+	// But create fails.
 	repo.On("Create", mock.Anything, req).Return(errors.New("database error"))
 
 	err := service.SaveRequest(context.Background(), req)
@@ -578,13 +583,13 @@ func TestSaveRequest_UpdateError(t *testing.T) {
 	service := NewRequestService(repo, httpClient, historyRepo, logger)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
 	existingReq := req.Clone()
 
-	// Request exists
+	// Request exists.
 	repo.On("FindByID", mock.Anything, req.ID).Return(existingReq, nil)
-	// But update fails
+	// But update fails.
 	repo.On("Update", mock.Anything, req).Return(errors.New("database error"))
 
 	err := service.SaveRequest(context.Background(), req)
@@ -604,7 +609,7 @@ func TestCreateRequest_WithExistingID(t *testing.T) {
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
 	req.ID = "existing-id"
-	req.Name = "Test Request"
+	req.Name = testRequestName
 
 	createdReq, err := service.CreateRequest(context.Background(), req)
 
@@ -624,7 +629,7 @@ func TestCreateRequest_WithExistingTimestamp(t *testing.T) {
 	existingTime := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 
 	req := domain.NewRequestWithMethodAndURL("GET", "https://api.example.com/test")
-	req.Name = "Test Request"
+	req.Name = testRequestName
 	req.CreatedAt = existingTime
 
 	createdReq, err := service.CreateRequest(context.Background(), req)
@@ -640,7 +645,7 @@ func TestNewRequestService_NilLogger(t *testing.T) {
 	httpClient := new(MockHTTPClient)
 	historyRepo := new(MockHistoryRepository)
 
-	// Pass nil logger - should default to slog.Default()
+	// Pass nil logger - should default to slog.Default().
 	service := NewRequestService(repo, httpClient, historyRepo, nil)
 
 	assert.NotNil(t, service)

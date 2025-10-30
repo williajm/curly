@@ -1,12 +1,18 @@
 package domain
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"testing"
 )
 
-// TestNoAuth tests the NoAuth implementation
+// Test constants for repeated test values.
+const (
+	testValue = "value"
+)
+
+// TestNoAuth tests the NoAuth implementation.
 func TestNoAuth(t *testing.T) {
 	auth := NewNoAuth()
 
@@ -27,14 +33,14 @@ func TestNoAuth(t *testing.T) {
 		if err := auth.Apply(req); err != nil {
 			t.Errorf("expected no error, got %v", err)
 		}
-		// Should not add any headers
+		// Should not add any headers.
 		if req.Header.Get("Authorization") != "" {
 			t.Errorf("expected no Authorization header, got '%s'", req.Header.Get("Authorization"))
 		}
 	})
 }
 
-// TestBasicAuth tests the BasicAuth implementation
+// TestBasicAuth tests the BasicAuth implementation.
 func TestBasicAuth(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -78,25 +84,25 @@ func TestBasicAuth(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			auth := NewBasicAuth(tt.username, tt.password)
 
-			// Test Type
+			// Test Type.
 			if auth.Type() != "basic" {
 				t.Errorf("expected type 'basic', got '%s'", auth.Type())
 			}
 
-			// Test Validate
+			// Test Validate.
 			err := auth.Validate()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// Test Apply
+			// Test Apply.
 			req, _ := http.NewRequest("GET", "http://example.com", nil)
 			err = auth.Apply(req)
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Apply() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// If valid, check the Authorization header
+			// If valid, check the Authorization header.
 			if tt.wantErr == nil {
 				authHeader := req.Header.Get("Authorization")
 				if authHeader == "" {
@@ -110,7 +116,7 @@ func TestBasicAuth(t *testing.T) {
 	}
 }
 
-// TestBasicAuthEncoding tests that BasicAuth properly encodes credentials
+// TestBasicAuthEncoding tests that BasicAuth properly encodes credentials.
 func TestBasicAuthEncoding(t *testing.T) {
 	auth := NewBasicAuth("testuser", "testpass")
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
@@ -121,14 +127,14 @@ func TestBasicAuthEncoding(t *testing.T) {
 	}
 
 	authHeader := req.Header.Get("Authorization")
-	// The base64 encoding of "testuser:testpass" is "dGVzdHVzZXI6dGVzdHBhc3M="
+	// The base64 encoding of "testuser:testpass" is "dGVzdHVzZXI6dGVzdHBhc3M=".
 	expected := "Basic dGVzdHVzZXI6dGVzdHBhc3M="
 	if authHeader != expected {
 		t.Errorf("expected '%s', got '%s'", expected, authHeader)
 	}
 }
 
-// TestBearerAuth tests the BearerAuth implementation
+// TestBearerAuth tests the BearerAuth implementation.
 func TestBearerAuth(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -156,25 +162,25 @@ func TestBearerAuth(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			auth := NewBearerAuth(tt.token)
 
-			// Test Type
+			// Test Type.
 			if auth.Type() != "bearer" {
 				t.Errorf("expected type 'bearer', got '%s'", auth.Type())
 			}
 
-			// Test Validate
+			// Test Validate.
 			err := auth.Validate()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// Test Apply
+			// Test Apply.
 			req, _ := http.NewRequest("GET", "http://example.com", nil)
 			err = auth.Apply(req)
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Apply() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// If valid, check the Authorization header
+			// If valid, check the Authorization header.
 			if tt.wantErr == nil {
 				authHeader := req.Header.Get("Authorization")
 				expected := "Bearer " + tt.token
@@ -186,7 +192,7 @@ func TestBearerAuth(t *testing.T) {
 	}
 }
 
-// TestAPIKeyAuth tests the APIKeyAuth implementation
+// TestAPIKeyAuth tests the APIKeyAuth implementation.
 func TestAPIKeyAuth(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -250,32 +256,33 @@ func TestAPIKeyAuth(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			auth := NewAPIKeyAuth(tt.key, tt.value, tt.location)
 
-			// Test Type
+			// Test Type.
 			if auth.Type() != "apikey" {
 				t.Errorf("expected type 'apikey', got '%s'", auth.Type())
 			}
 
-			// Test Validate
+			// Test Validate.
 			err := auth.Validate()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// Test Apply
+			// Test Apply.
 			req, _ := http.NewRequest("GET", "http://example.com", nil)
 			err = auth.Apply(req)
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Apply() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
-			// If valid, check that the key is in the right location
+			// If valid, check that the key is in the right location.
 			if tt.wantErr == nil {
-				if tt.location == APIKeyLocationHeader {
+				switch tt.location {
+				case APIKeyLocationHeader:
 					headerValue := req.Header.Get(tt.key)
 					if headerValue != tt.value {
 						t.Errorf("expected header '%s' to be '%s', got '%s'", tt.key, tt.value, headerValue)
 					}
-				} else if tt.location == APIKeyLocationQuery {
+				case APIKeyLocationQuery:
 					queryValue := req.URL.Query().Get(tt.key)
 					if queryValue != tt.value {
 						t.Errorf("expected query param '%s' to be '%s', got '%s'", tt.key, tt.value, queryValue)
@@ -286,7 +293,7 @@ func TestAPIKeyAuth(t *testing.T) {
 	}
 }
 
-// TestAPIKeyAuthHeader tests that API key is correctly added to headers
+// TestAPIKeyAuthHeader tests that API key is correctly added to headers.
 func TestAPIKeyAuthHeader(t *testing.T) {
 	auth := NewAPIKeyAuth("X-API-Key", "my-secret-key", APIKeyLocationHeader)
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
@@ -301,7 +308,7 @@ func TestAPIKeyAuthHeader(t *testing.T) {
 	}
 }
 
-// TestAPIKeyAuthQuery tests that API key is correctly added to query parameters
+// TestAPIKeyAuthQuery tests that API key is correctly added to query parameters.
 func TestAPIKeyAuthQuery(t *testing.T) {
 	auth := NewAPIKeyAuth("api_key", "my-secret-key", APIKeyLocationQuery)
 	req, _ := http.NewRequest("GET", "http://example.com/path?existing=value", nil)
@@ -316,21 +323,21 @@ func TestAPIKeyAuthQuery(t *testing.T) {
 		t.Errorf("expected api_key query param to be 'my-secret-key', got '%s'", query.Get("api_key"))
 	}
 
-	// Ensure existing query params are preserved
-	if query.Get("existing") != "value" {
+	// Ensure existing query params are preserved.
+	if query.Get("existing") != testValue {
 		t.Errorf("expected existing query param to be preserved, got '%s'", query.Get("existing"))
 	}
 }
 
-// TestAuthConfigInterface ensures all auth types implement the AuthConfig interface
-func TestAuthConfigInterface(t *testing.T) {
+// TestAuthConfigInterface ensures all auth types implement the AuthConfig interface.
+func TestAuthConfigInterface(_ *testing.T) {
 	var _ AuthConfig = (*NoAuth)(nil)
 	var _ AuthConfig = (*BasicAuth)(nil)
 	var _ AuthConfig = (*BearerAuth)(nil)
 	var _ AuthConfig = (*APIKeyAuth)(nil)
 }
 
-// TestAPIKeyAuthPreservesExistingURL tests that applying API key auth preserves the URL structure
+// TestAPIKeyAuthPreservesExistingURL tests that applying API key auth preserves the URL structure.
 func TestAPIKeyAuthPreservesExistingURL(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -376,7 +383,7 @@ func TestAPIKeyAuthPreservesExistingURL(t *testing.T) {
 	}
 }
 
-// TestAPIKeyLocationConstants verifies the location constants
+// TestAPIKeyLocationConstants verifies the location constants.
 func TestAPIKeyLocationConstants(t *testing.T) {
 	if APIKeyLocationHeader != "header" {
 		t.Errorf("expected APIKeyLocationHeader to be 'header', got '%s'", APIKeyLocationHeader)
@@ -386,7 +393,7 @@ func TestAPIKeyLocationConstants(t *testing.T) {
 	}
 }
 
-// BenchmarkBasicAuthApply benchmarks the BasicAuth Apply method
+// BenchmarkBasicAuthApply benchmarks the BasicAuth Apply method.
 func BenchmarkBasicAuthApply(b *testing.B) {
 	auth := NewBasicAuth("user", "password")
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
@@ -397,7 +404,7 @@ func BenchmarkBasicAuthApply(b *testing.B) {
 	}
 }
 
-// BenchmarkBearerAuthApply benchmarks the BearerAuth Apply method
+// BenchmarkBearerAuthApply benchmarks the BearerAuth Apply method.
 func BenchmarkBearerAuthApply(b *testing.B) {
 	auth := NewBearerAuth("my-token-12345")
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
@@ -408,7 +415,7 @@ func BenchmarkBearerAuthApply(b *testing.B) {
 	}
 }
 
-// BenchmarkAPIKeyAuthHeaderApply benchmarks the APIKeyAuth Apply method with header location
+// BenchmarkAPIKeyAuthHeaderApply benchmarks the APIKeyAuth Apply method with header location.
 func BenchmarkAPIKeyAuthHeaderApply(b *testing.B) {
 	auth := NewAPIKeyAuth("X-API-Key", "secret-key", APIKeyLocationHeader)
 	req, _ := http.NewRequest("GET", "http://example.com", nil)
@@ -419,7 +426,7 @@ func BenchmarkAPIKeyAuthHeaderApply(b *testing.B) {
 	}
 }
 
-// BenchmarkAPIKeyAuthQueryApply benchmarks the APIKeyAuth Apply method with query location
+// BenchmarkAPIKeyAuthQueryApply benchmarks the APIKeyAuth Apply method with query location.
 func BenchmarkAPIKeyAuthQueryApply(b *testing.B) {
 	auth := NewAPIKeyAuth("api_key", "secret-key", APIKeyLocationQuery)
 
@@ -430,7 +437,7 @@ func BenchmarkAPIKeyAuthQueryApply(b *testing.B) {
 	}
 }
 
-// TestAuthWithSpecialCharacters tests auth implementations with special characters
+// TestAuthWithSpecialCharacters tests auth implementations with special characters.
 func TestAuthWithSpecialCharacters(t *testing.T) {
 	t.Run("BasicAuth with special chars", func(t *testing.T) {
 		auth := NewBasicAuth("user@example.com", "p@ssw0rd!#$%")
@@ -486,13 +493,13 @@ func TestAuthWithSpecialCharacters(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		// The URL encoding should handle special characters
+		// The URL encoding should handle special characters.
 		rawQuery := req.URL.RawQuery
 		if rawQuery == "" {
 			t.Error("expected query string to be set")
 		}
 
-		// Decode and verify
+		// Decode and verify.
 		parsed, _ := url.ParseQuery(rawQuery)
 		if parsed.Get("key") != "value with spaces & symbols=test" {
 			t.Errorf("expected decoded value to match, got '%s'", parsed.Get("key"))

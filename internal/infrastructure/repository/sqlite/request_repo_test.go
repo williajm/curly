@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -19,12 +20,12 @@ func setupTestDB(t *testing.T) *sql.DB {
 		t.Fatalf("failed to open test database: %v", err)
 	}
 
-	// Apply pragmas
+	// Apply pragmas.
 	if err := applyPragmas(db); err != nil {
 		t.Fatalf("failed to apply pragmas: %v", err)
 	}
 
-	// Run migrations
+	// Run migrations.
 	if err := runMigrations(db, "../../../../migrations"); err != nil {
 		t.Fatalf("failed to run migrations: %v", err)
 	}
@@ -34,7 +35,7 @@ func setupTestDB(t *testing.T) *sql.DB {
 
 func TestRequestRepository_Create(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
@@ -143,12 +144,12 @@ func TestRequestRepository_Create(t *testing.T) {
 
 func TestRequestRepository_FindByID(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test request
+	// Create test request.
 	testReq := &domain.Request{
 		ID:          "test-find-1",
 		Name:        "Find Test",
@@ -197,7 +198,7 @@ func TestRequestRepository_FindByID(t *testing.T) {
 			}
 
 			if !tt.wantErr && got != nil {
-				// Verify fields
+				// Verify fields.
 				if got.ID != testReq.ID {
 					t.Errorf("FindByID() ID = %v, want %v", got.ID, testReq.ID)
 				}
@@ -220,12 +221,12 @@ func TestRequestRepository_FindByID(t *testing.T) {
 
 func TestRequestRepository_FindAll(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create multiple test requests
+	// Create multiple test requests.
 	requests := []*domain.Request{
 		{
 			ID:          "test-all-1",
@@ -268,7 +269,7 @@ func TestRequestRepository_FindAll(t *testing.T) {
 		t.Errorf("FindAll() returned %d requests, want %d", len(got), len(requests))
 	}
 
-	// Verify results are ordered by created_at descending
+	// Verify results are ordered by created_at descending.
 	if len(got) >= 2 {
 		if got[0].ID != "test-all-2" {
 			t.Errorf("FindAll() first request ID = %v, want %v (should be newest)", got[0].ID, "test-all-2")
@@ -278,12 +279,12 @@ func TestRequestRepository_FindAll(t *testing.T) {
 
 func TestRequestRepository_Update(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create initial request
+	// Create initial request.
 	original := &domain.Request{
 		ID:          "test-update-1",
 		Name:        "Original Name",
@@ -301,7 +302,7 @@ func TestRequestRepository_Update(t *testing.T) {
 		t.Fatalf("failed to create test request: %v", err)
 	}
 
-	// Update the request
+	// Update the request.
 	updated := &domain.Request{
 		ID:          "test-update-1",
 		Name:        "Updated Name",
@@ -319,7 +320,7 @@ func TestRequestRepository_Update(t *testing.T) {
 		t.Fatalf("Update() error = %v", err)
 	}
 
-	// Verify the update
+	// Verify the update.
 	got, err := repo.FindByID(ctx, "test-update-1")
 	if err != nil {
 		t.Fatalf("FindByID() after update error = %v", err)
@@ -341,7 +342,7 @@ func TestRequestRepository_Update(t *testing.T) {
 		t.Errorf("Update() AuthConfig.Type() = %v, want %v", got.AuthConfig.Type(), updated.AuthConfig.Type())
 	}
 
-	// Test updating non-existent request
+	// Test updating non-existent request.
 	nonExistent := &domain.Request{
 		ID:          "non-existent",
 		Name:        "Non-existent",
@@ -356,19 +357,19 @@ func TestRequestRepository_Update(t *testing.T) {
 	}
 
 	err = repo.Update(ctx, nonExistent)
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("Update() with non-existent ID error = %v, want ErrNotFound", err)
 	}
 }
 
 func TestRequestRepository_Delete(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test request
+	// Create test request.
 	testReq := &domain.Request{
 		ID:          "test-delete-1",
 		Name:        "Delete Test",
@@ -386,27 +387,27 @@ func TestRequestRepository_Delete(t *testing.T) {
 		t.Fatalf("failed to create test request: %v", err)
 	}
 
-	// Delete the request
+	// Delete the request.
 	if err := repo.Delete(ctx, "test-delete-1"); err != nil {
 		t.Fatalf("Delete() error = %v", err)
 	}
 
-	// Verify deletion
+	// Verify deletion.
 	_, err := repo.FindByID(ctx, "test-delete-1")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("FindByID() after delete error = %v, want ErrNotFound", err)
 	}
 
-	// Test deleting non-existent request
+	// Test deleting non-existent request.
 	err = repo.Delete(ctx, "non-existent")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("Delete() with non-existent ID error = %v, want ErrNotFound", err)
 	}
 }
 
 func TestRequestRepository_AuthConfigSerialization(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewRequestRepository(db)
 	ctx := context.Background()
@@ -452,23 +453,23 @@ func TestRequestRepository_AuthConfigSerialization(t *testing.T) {
 				UpdatedAt:   time.Now(),
 			}
 
-			// Create
+			// Create.
 			if err := repo.Create(ctx, req); err != nil {
 				t.Fatalf("Create() error = %v", err)
 			}
 
-			// Retrieve
+			// Retrieve.
 			got, err := repo.FindByID(ctx, req.ID)
 			if err != nil {
 				t.Fatalf("FindByID() error = %v", err)
 			}
 
-			// Verify auth type
+			// Verify auth type.
 			if got.AuthConfig.Type() != tt.authConfig.Type() {
 				t.Errorf("AuthConfig.Type() = %v, want %v", got.AuthConfig.Type(), tt.authConfig.Type())
 			}
 
-			// Verify auth config details based on type
+			// Verify auth config details based on type.
 			switch expected := tt.authConfig.(type) {
 			case *domain.BasicAuth:
 				gotAuth, ok := got.AuthConfig.(*domain.BasicAuth)

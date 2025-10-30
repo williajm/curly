@@ -63,7 +63,7 @@ func TestCreateAuth_BasicAuth_Success(t *testing.T) {
 	assert.NotNil(t, auth)
 	assert.Equal(t, "basic", auth.Type())
 
-	// Verify it's actually a BasicAuth
+	// Verify it's actually a BasicAuth.
 	basicAuth, ok := auth.(*domain.BasicAuth)
 	assert.True(t, ok)
 	assert.Equal(t, "testuser", basicAuth.Username)
@@ -126,7 +126,7 @@ func TestCreateAuth_BearerAuth_Success(t *testing.T) {
 	assert.NotNil(t, auth)
 	assert.Equal(t, "bearer", auth.Type())
 
-	// Verify it's actually a BearerAuth
+	// Verify it's actually a BearerAuth.
 	bearerAuth, ok := auth.(*domain.BearerAuth)
 	assert.True(t, ok)
 	assert.Equal(t, "my-secret-token", bearerAuth.Token)
@@ -173,7 +173,7 @@ func TestCreateAuth_APIKeyAuth_Header_Success(t *testing.T) {
 	assert.NotNil(t, auth)
 	assert.Equal(t, "apikey", auth.Type())
 
-	// Verify it's actually an APIKeyAuth
+	// Verify it's actually an APIKeyAuth.
 	apiKeyAuth, ok := auth.(*domain.APIKeyAuth)
 	assert.True(t, ok)
 	assert.Equal(t, "X-API-Key", apiKeyAuth.Key)
@@ -196,7 +196,7 @@ func TestCreateAuth_APIKeyAuth_Query_Success(t *testing.T) {
 	assert.NotNil(t, auth)
 	assert.Equal(t, "apikey", auth.Type())
 
-	// Verify it's actually an APIKeyAuth
+	// Verify it's actually an APIKeyAuth.
 	apiKeyAuth, ok := auth.(*domain.APIKeyAuth)
 	assert.True(t, ok)
 	assert.Equal(t, "api_key", apiKeyAuth.Key)

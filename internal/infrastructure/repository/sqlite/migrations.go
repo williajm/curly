@@ -19,24 +19,24 @@ type Migration struct {
 // runMigrations executes all pending migrations in order.
 // It tracks which migrations have been applied using a schema_migrations table.
 func runMigrations(db *sql.DB, migrationsPath string) error {
-	// Create migrations tracking table if it doesn't exist
+	// Create migrations tracking table if it doesn't exist.
 	if err := createMigrationsTable(db); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
-	// Load migration files
+	// Load migration files.
 	migrations, err := loadMigrations(migrationsPath)
 	if err != nil {
 		return fmt.Errorf("failed to load migrations: %w", err)
 	}
 
-	// Get applied migrations
+	// Get applied migrations.
 	appliedVersions, err := getAppliedMigrations(db)
 	if err != nil {
 		return fmt.Errorf("failed to get applied migrations: %w", err)
 	}
 
-	// Apply pending migrations
+	// Apply pending migrations.
 	for _, migration := range migrations {
 		if _, applied := appliedVersions[migration.Version]; applied {
 			continue
@@ -65,15 +65,15 @@ func createMigrationsTable(db *sql.DB) error {
 }
 
 // loadMigrations reads all migration files from the specified directory.
-// Migration files should be named: NNN_description.sql (e.g., 001_initial_schema.sql)
+// Migration files should be named: NNN_description.sql (e.g., 001_initial_schema.sql).
 func loadMigrations(migrationsPath string) ([]Migration, error) {
-	// Check if migrations directory exists
+	// Check if migrations directory exists.
 	if _, err := os.Stat(migrationsPath); os.IsNotExist(err) {
-		// No migrations directory, return empty list (not an error)
+		// No migrations directory, return empty list (not an error).
 		return []Migration{}, nil
 	}
 
-	// Read directory contents
+	// Read directory contents.
 	entries, err := os.ReadDir(migrationsPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read migrations directory: %w", err)
@@ -94,7 +94,7 @@ func loadMigrations(migrationsPath string) ([]Migration, error) {
 		migrations = append(migrations, migration)
 	}
 
-	// Sort migrations by version
+	// Sort migrations by version.
 	sort.Slice(migrations, func(i, j int) bool {
 		return migrations[i].Version < migrations[j].Version
 	})
@@ -103,11 +103,11 @@ func loadMigrations(migrationsPath string) ([]Migration, error) {
 }
 
 // parseMigrationFile parses a migration file and extracts version, name, and SQL.
-// Expected format: NNN_description.sql
+// Expected format: NNN_description.sql.
 func parseMigrationFile(filePath string) (Migration, error) {
 	filename := filepath.Base(filePath)
 
-	// Extract version from filename (before first underscore)
+	// Extract version from filename (before first underscore).
 	parts := strings.SplitN(filename, "_", 2)
 	if len(parts) != 2 {
 		return Migration{}, fmt.Errorf("invalid migration filename format: %s (expected: NNN_description.sql)", filename)
@@ -119,11 +119,11 @@ func parseMigrationFile(filePath string) (Migration, error) {
 		return Migration{}, fmt.Errorf("invalid version number in filename: %s", filename)
 	}
 
-	// Extract name (remove .sql extension)
+	// Extract name (remove .sql extension).
 	name := strings.TrimSuffix(parts[1], ".sql")
 
-	// Read SQL content
-	sqlBytes, err := os.ReadFile(filePath)
+	// Read SQL content.
+	sqlBytes, err := os.ReadFile(filePath) // #nosec G304 -- Migration file path is controlled by the application
 	if err != nil {
 		return Migration{}, fmt.Errorf("failed to read migration file: %w", err)
 	}
@@ -143,7 +143,7 @@ func getAppliedMigrations(db *sql.DB) (map[int]bool, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	applied := make(map[int]bool)
 
@@ -160,25 +160,25 @@ func getAppliedMigrations(db *sql.DB) (map[int]bool, error) {
 
 // applyMigration executes a single migration within a transaction.
 func applyMigration(db *sql.DB, migration Migration) error {
-	// Begin transaction
+	// Begin transaction.
 	tx, err := db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
-	defer tx.Rollback() // Safe to call even after Commit
+	defer func() { _ = tx.Rollback() }() // Safe to call even after Commit
 
-	// Execute migration SQL
+	// Execute migration SQL.
 	if _, err := tx.Exec(migration.SQL); err != nil {
 		return fmt.Errorf("failed to execute migration SQL: %w", err)
 	}
 
-	// Record migration in schema_migrations table
+	// Record migration in schema_migrations table.
 	recordQuery := `INSERT INTO schema_migrations (version, name) VALUES (?, ?)`
 	if _, err := tx.Exec(recordQuery, migration.Version, migration.Name); err != nil {
 		return fmt.Errorf("failed to record migration: %w", err)
 	}
 
-	// Commit transaction
+	// Commit transaction.
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -233,18 +233,18 @@ CREATE INDEX IF NOT EXISTS idx_history_request_id ON history(request_id);
 // MigrateDB runs embedded migrations on the database.
 // This is the recommended way to initialize the database schema.
 func MigrateDB(db *sql.DB) error {
-	// Create migrations tracking table if it doesn't exist
+	// Create migrations tracking table if it doesn't exist.
 	if err := createMigrationsTable(db); err != nil {
 		return fmt.Errorf("failed to create migrations table: %w", err)
 	}
 
-	// Get applied migrations
+	// Get applied migrations.
 	appliedVersions, err := getAppliedMigrations(db)
 	if err != nil {
 		return fmt.Errorf("failed to get applied migrations: %w", err)
 	}
 
-	// Apply pending migrations
+	// Apply pending migrations.
 	for _, migration := range embeddedMigrations {
 		if _, applied := appliedVersions[migration.Version]; applied {
 			continue

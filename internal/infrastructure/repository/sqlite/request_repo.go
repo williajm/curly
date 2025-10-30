@@ -11,7 +11,7 @@ import (
 	"github.com/williajm/curly/internal/domain"
 )
 
-// Common repository errors
+// Common repository errors.
 var (
 	ErrNotFound = errors.New("not found")
 )
@@ -32,30 +32,30 @@ func (r *RequestRepository) Create(ctx context.Context, req *domain.Request) err
 		return fmt.Errorf("request cannot be nil")
 	}
 
-	// Validate the request
+	// Validate the request.
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Serialize headers to JSON
+	// Serialize headers to JSON.
 	headersJSON, err := json.Marshal(req.Headers)
 	if err != nil {
 		return fmt.Errorf("failed to serialize headers: %w", err)
 	}
 
-	// Serialize query params to JSON
+	// Serialize query params to JSON.
 	queryParamsJSON, err := json.Marshal(req.QueryParams)
 	if err != nil {
 		return fmt.Errorf("failed to serialize query params: %w", err)
 	}
 
-	// Serialize auth config to JSON
+	// Serialize auth config to JSON.
 	authConfigJSON, err := serializeAuthConfig(req.AuthConfig)
 	if err != nil {
 		return fmt.Errorf("failed to serialize auth config: %w", err)
 	}
 
-	// Get auth type (handle nil AuthConfig)
+	// Get auth type (handle nil AuthConfig).
 	authType := ""
 	if req.AuthConfig != nil {
 		authType = req.AuthConfig.Type()
@@ -134,7 +134,7 @@ func (r *RequestRepository) FindAll(ctx context.Context) ([]*domain.Request, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to query requests: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var requests []*domain.Request
 
@@ -179,33 +179,33 @@ func (r *RequestRepository) Update(ctx context.Context, req *domain.Request) err
 		return fmt.Errorf("request cannot be nil")
 	}
 
-	// Validate the request
+	// Validate the request.
 	if err := req.Validate(); err != nil {
 		return fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Update the timestamp
+	// Update the timestamp.
 	req.UpdatedAt = time.Now()
 
-	// Serialize headers to JSON
+	// Serialize headers to JSON.
 	headersJSON, err := json.Marshal(req.Headers)
 	if err != nil {
 		return fmt.Errorf("failed to serialize headers: %w", err)
 	}
 
-	// Serialize query params to JSON
+	// Serialize query params to JSON.
 	queryParamsJSON, err := json.Marshal(req.QueryParams)
 	if err != nil {
 		return fmt.Errorf("failed to serialize query params: %w", err)
 	}
 
-	// Serialize auth config to JSON
+	// Serialize auth config to JSON.
 	authConfigJSON, err := serializeAuthConfig(req.AuthConfig)
 	if err != nil {
 		return fmt.Errorf("failed to serialize auth config: %w", err)
 	}
 
-	// Get auth type (handle nil AuthConfig)
+	// Get auth type (handle nil AuthConfig).
 	authType := ""
 	if req.AuthConfig != nil {
 		authType = req.AuthConfig.Type()
@@ -269,25 +269,25 @@ func (r *RequestRepository) Delete(ctx context.Context, id string) error {
 
 // buildRequest constructs a domain.Request from database fields.
 func buildRequest(id, name, method, url, headersJSON, queryParamsJSON, body, authType, authConfigJSON, createdAt, updatedAt string) (*domain.Request, error) {
-	// Parse headers
+	// Parse headers.
 	var headers map[string]string
 	if err := json.Unmarshal([]byte(headersJSON), &headers); err != nil {
 		return nil, fmt.Errorf("failed to deserialize headers: %w", err)
 	}
 
-	// Parse query params
+	// Parse query params.
 	var queryParams map[string]string
 	if err := json.Unmarshal([]byte(queryParamsJSON), &queryParams); err != nil {
 		return nil, fmt.Errorf("failed to deserialize query params: %w", err)
 	}
 
-	// Parse auth config
+	// Parse auth config.
 	authConfig, err := deserializeAuthConfig(authType, authConfigJSON)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deserialize auth config: %w", err)
 	}
 
-	// Parse timestamps
+	// Parse timestamps.
 	createdTime, err := time.Parse(time.RFC3339, createdAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse created_at: %w", err)

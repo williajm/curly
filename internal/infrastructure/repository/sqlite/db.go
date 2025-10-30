@@ -1,3 +1,4 @@
+// Package sqlite provides SQLite database implementations of repository interfaces.
 package sqlite
 
 import (
@@ -36,30 +37,30 @@ func Open(config *Config) (*sql.DB, error) {
 		config = DefaultConfig()
 	}
 
-	// Ensure the database directory exists (unless using in-memory database)
+	// Ensure the database directory exists (unless using in-memory database).
 	if config.Path != ":memory:" {
 		dbDir := filepath.Dir(config.Path)
-		if err := os.MkdirAll(dbDir, 0755); err != nil {
+		if err := os.MkdirAll(dbDir, 0750); err != nil {
 			return nil, fmt.Errorf("failed to create database directory: %w", err)
 		}
 	}
 
-	// Open the database connection
+	// Open the database connection.
 	db, err := sql.Open("sqlite", config.Path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
-	// Apply performance pragmas
+	// Apply performance pragmas.
 	if err := applyPragmas(db); err != nil {
-		db.Close()
+		_ = db.Close()
 		return nil, fmt.Errorf("failed to apply pragmas: %w", err)
 	}
 
-	// Run migrations if path is specified
+	// Run migrations if path is specified.
 	if config.MigrationsPath != "" {
 		if err := runMigrations(db, config.MigrationsPath); err != nil {
-			db.Close()
+			_ = db.Close()
 			return nil, fmt.Errorf("failed to run migrations: %w", err)
 		}
 	}
@@ -70,15 +71,15 @@ func Open(config *Config) (*sql.DB, error) {
 // applyPragmas configures SQLite for optimal performance.
 func applyPragmas(db *sql.DB) error {
 	pragmas := []string{
-		// Enable Write-Ahead Logging for better concurrency
+		// Enable Write-Ahead Logging for better concurrency.
 		"PRAGMA journal_mode = WAL",
-		// Normal synchronous mode is safe with WAL and much faster
+		// Normal synchronous mode is safe with WAL and much faster.
 		"PRAGMA synchronous = NORMAL",
-		// 64MB cache size for better performance
+		// 64MB cache size for better performance.
 		"PRAGMA cache_size = -64000",
-		// Enable foreign key constraints
+		// Enable foreign key constraints.
 		"PRAGMA foreign_keys = ON",
-		// Reduce memory usage for temp tables
+		// Reduce memory usage for temp tables.
 		"PRAGMA temp_store = MEMORY",
 	}
 

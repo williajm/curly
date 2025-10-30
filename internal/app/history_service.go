@@ -107,7 +107,7 @@ func (s *HistoryService) CleanupOldHistory(ctx context.Context, daysToKeep int) 
 		return 0, fmt.Errorf("daysToKeep must be non-negative, got: %d", daysToKeep)
 	}
 
-	// Calculate the cutoff timestamp
+	// Calculate the cutoff timestamp.
 	cutoffTime := time.Now().UTC().AddDate(0, 0, -daysToKeep)
 	cutoffTimestamp := cutoffTime.Format(time.RFC3339)
 

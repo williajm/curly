@@ -13,7 +13,7 @@ import (
 	"github.com/williajm/curly/internal/domain"
 )
 
-// Field indices for focus management
+// Field indices for focus management.
 const (
 	fieldMethod = iota
 	fieldURL
@@ -26,46 +26,52 @@ const (
 	fieldCount // Total number of fields
 )
 
-// RequestModel represents the request builder form
+// UI indicator constants.
+const (
+	// focusedIndicator is displayed next to focused input fields.
+	focusedIndicator = " (*)"
+)
+
+// RequestModel represents the request builder form.
 type RequestModel struct {
-	// Services
+	// Services.
 	requestService *app.RequestService
 	authService    *app.AuthService
 
-	// Current request being built
+	// Current request being built.
 	request *domain.Request
 
-	// Form inputs
+	// Form inputs.
 	urlInput     textinput.Model
 	nameInput    textinput.Model
 	bodyTextArea textarea.Model
 
-	// State
+	// State.
 	methodIndex  int // Index into supported methods
 	focusedField int
 	loading      bool
 	errorMsg     string
 
-	// UI dimensions
+	// UI dimensions.
 	width  int
 	height int
 
-	// Simple key-value editors for headers and query params
-	// For MVP, we'll use simple string editing
+	// Simple key-value editors for headers and query params.
+	// For MVP, we'll use simple string editing.
 	headersText     string
 	queryParamsText string
 	authTypeIndex   int // Index into auth types
 }
 
-// Custom messages for async operations
+// Custom messages for async operations.
 type requestSentMsg struct {
 	response *domain.Response
 	err      error
 }
 
-// NewRequestModel creates a new request builder model
+// NewRequestModel creates a new request builder model.
 func NewRequestModel(requestService *app.RequestService, authService *app.AuthService) RequestModel {
-	// Initialize text inputs
+	// Initialize text inputs.
 	urlInput := textinput.New()
 	urlInput.Placeholder = "https://api.example.com/endpoint"
 	urlInput.Width = 60
@@ -75,12 +81,12 @@ func NewRequestModel(requestService *app.RequestService, authService *app.AuthSe
 	nameInput.Placeholder = "My Request"
 	nameInput.Width = 60
 
-	// Initialize text area for body
+	// Initialize text area for body.
 	bodyTextArea := textarea.New()
 	bodyTextArea.Placeholder = "Request body (JSON, etc.)"
 	bodyTextArea.SetWidth(60)
 	bodyTextArea.SetHeight(8)
-	// Disable ctrl+enter in textarea so we can handle it globally
+	// Disable ctrl+enter in textarea so we can handle it globally.
 	bodyTextArea.KeyMap.InsertNewline.SetEnabled(false)
 
 	return RequestModel{
@@ -98,43 +104,43 @@ func NewRequestModel(requestService *app.RequestService, authService *app.AuthSe
 	}
 }
 
-// Init initializes the model
+// Init initializes the model.
 func (m RequestModel) Init() tea.Cmd {
 	return textinput.Blink
 }
 
-// Update handles messages and updates the model
+// Update handles messages and updates the model.
 func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Handle global keys first (before field-specific handling)
+		// Handle global keys first (before field-specific handling).
 		switch msg.String() {
-		case "ctrl+c":
+		case KeyCtrlC:
 			return m, tea.Quit
 
 		case "ctrl+enter", "ctrl+r":
-			// Send request - handle before field-specific keys
+			// Send request - handle before field-specific keys.
 			if !m.loading {
 				return m, m.sendRequest()
 			}
 			return m, nil
 
 		case "tab":
-			// Move focus to next field
+			// Move focus to next field.
 			m.focusedField = (m.focusedField + 1) % fieldCount
 			m.updateFocus()
 			return m, nil
 
 		case "shift+tab":
-			// Move focus to previous field
+			// Move focus to previous field.
 			m.focusedField = (m.focusedField - 1 + fieldCount) % fieldCount
 			m.updateFocus()
 			return m, nil
 		}
 
-		// Handle field-specific keys
+		// Handle field-specific keys.
 		switch m.focusedField {
 		case fieldMethod:
 			switch msg.String() {
@@ -159,7 +165,7 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 			cmds = append(cmds, cmd)
 
 		case fieldBody:
-			// Don't pass ctrl+enter/ctrl+r to textarea (handled globally above)
+			// Don't pass ctrl+enter/ctrl+r to textarea (handled globally above).
 			if msg.String() != "ctrl+enter" && msg.String() != "ctrl+r" {
 				var cmd tea.Cmd
 				m.bodyTextArea, cmd = m.bodyTextArea.Update(msg)
@@ -167,7 +173,7 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 			}
 
 		case fieldAuthType:
-			// Simple auth type selector (NoAuth, Basic, Bearer, APIKey)
+			// Simple auth type selector (NoAuth, Basic, Bearer, APIKey).
 			switch msg.String() {
 			case "left", "h":
 				if m.authTypeIndex > 0 {
@@ -193,14 +199,14 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 			m.errorMsg = msg.err.Error()
 		} else {
 			m.errorMsg = ""
-			// Response will be handled by the parent model
+			// Response will be handled by the parent model.
 		}
 		return m, nil
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		// Adjust input widths
+		// Adjust input widths.
 		m.urlInput.Width = min(60, msg.Width-20)
 		m.nameInput.Width = min(60, msg.Width-20)
 		m.bodyTextArea.SetWidth(min(60, msg.Width-20))
@@ -209,16 +215,16 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-// View renders the request builder form
+// View renders the request builder form.
 func (m RequestModel) View() string {
 	return m.RenderView()
 }
 
-// RenderView renders the full request view with all components
+// RenderView renders the full request view with all components.
 func (m RequestModel) RenderView() string {
 	var sections []string
 
-	// Import the view package would cause a cycle, so we'll implement here
+	// Import the view package would cause a cycle, so we'll implement here.
 	sections = append(sections, m.renderTitle())
 	sections = append(sections, "")
 	sections = append(sections, m.renderMethod())
@@ -271,7 +277,7 @@ func (m RequestModel) renderURL() string {
 	label := "URL:"
 	focused := ""
 	if m.focusedField == fieldURL {
-		focused = " (*)"
+		focused = focusedIndicator
 	}
 	return label + focused + "\n" + m.urlInput.View()
 }
@@ -280,7 +286,7 @@ func (m RequestModel) renderName() string {
 	label := "Name (optional):"
 	focused := ""
 	if m.focusedField == fieldName {
-		focused = " (*)"
+		focused = focusedIndicator
 	}
 	return label + focused + "\n" + m.nameInput.View()
 }
@@ -289,7 +295,7 @@ func (m RequestModel) renderBody() string {
 	label := "Body:"
 	focused := ""
 	if m.focusedField == fieldBody {
-		focused = " (*)"
+		focused = focusedIndicator
 	}
 	return label + focused + "\n" + m.bodyTextArea.View()
 }
@@ -314,7 +320,7 @@ func (m RequestModel) renderSendButton() string {
 	}
 	focused := ""
 	if m.focusedField == fieldSend {
-		focused = " (*)"
+		focused = focusedIndicator
 	}
 	return "[Send Request]" + focused
 }
@@ -323,14 +329,14 @@ func (m RequestModel) renderHelp() string {
 	return "Tab: next • Shift+Tab: prev • Ctrl+Enter: send • ?: help • q: quit"
 }
 
-// updateFocus updates which input field has focus
+// updateFocus updates which input field has focus.
 func (m *RequestModel) updateFocus() {
-	// Blur all inputs
+	// Blur all inputs.
 	m.urlInput.Blur()
 	m.nameInput.Blur()
 	m.bodyTextArea.Blur()
 
-	// Focus the active field
+	// Focus the active field.
 	switch m.focusedField {
 	case fieldURL:
 		m.urlInput.Focus()
@@ -341,12 +347,12 @@ func (m *RequestModel) updateFocus() {
 	}
 }
 
-// sendRequest creates a command to send the HTTP request
+// sendRequest creates a command to send the HTTP request.
 func (m *RequestModel) sendRequest() tea.Cmd {
-	// Build request from form inputs
+	// Build request from form inputs.
 	req := m.buildRequest()
 
-	// Validate request
+	// Validate request.
 	if err := req.Validate(); err != nil {
 		return func() tea.Msg {
 			return requestSentMsg{err: err}
@@ -362,68 +368,60 @@ func (m *RequestModel) sendRequest() tea.Cmd {
 	}
 }
 
-// buildRequest constructs a domain.Request from the form inputs
+// buildRequest constructs a domain.Request from the form inputs.
 func (m *RequestModel) buildRequest() *domain.Request {
 	req := m.request
 
-	// Set method
+	// Set method.
 	req.Method = domain.SupportedMethods[m.methodIndex]
 
-	// Set URL
+	// Set URL.
 	req.URL = m.urlInput.Value()
 
-	// Set name
+	// Set name.
 	req.Name = m.nameInput.Value()
 	if req.Name == "" {
 		req.Name = fmt.Sprintf("%s %s", req.Method, req.URL)
 	}
 
-	// Set body
+	// Set body.
 	req.Body = m.bodyTextArea.Value()
 
-	// Parse headers from text (simple format: "Key: Value" per line)
-	// For MVP, we'll skip complex parsing
+	// Parse headers from text (simple format: "Key: Value" per line).
+	// For MVP, we'll skip complex parsing.
 
-	// Parse query params from text (simple format: "key=value" per line)
-	// For MVP, we'll skip complex parsing
+	// Parse query params from text (simple format: "key=value" per line).
+	// For MVP, we'll skip complex parsing.
 
-	// Set auth based on authTypeIndex
+	// Set auth based on authTypeIndex.
 	switch m.authTypeIndex {
 	case 0:
 		req.AuthConfig = domain.NewNoAuth()
 	case 1:
-		// Basic auth - for MVP, hardcoded or skipped
+		// Basic auth - for MVP, hardcoded or skipped.
 		req.AuthConfig = domain.NewNoAuth()
 	case 2:
-		// Bearer token - for MVP, hardcoded or skipped
+		// Bearer token - for MVP, hardcoded or skipped.
 		req.AuthConfig = domain.NewNoAuth()
 	case 3:
-		// API Key - for MVP, hardcoded or skipped
+		// API Key - for MVP, hardcoded or skipped.
 		req.AuthConfig = domain.NewNoAuth()
 	}
 
 	return req
 }
 
-// Helper function for min
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-// GetRequest returns the current request being built
+// GetRequest returns the current request being built.
 func (m *RequestModel) GetRequest() *domain.Request {
 	return m.buildRequest()
 }
 
-// SetError sets an error message to display
+// SetError sets an error message to display.
 func (m *RequestModel) SetError(err string) {
 	m.errorMsg = err
 }
 
-// IsLoading returns whether a request is currently being sent
+// IsLoading returns whether a request is currently being sent.
 func (m *RequestModel) IsLoading() bool {
 	return m.loading
 }

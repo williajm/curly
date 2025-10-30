@@ -7,6 +7,21 @@ import (
 	"strings"
 )
 
+// Authentication type constants.
+const (
+	// AuthTypeNone indicates no authentication.
+	AuthTypeNone = "none"
+
+	// AuthTypeBasic indicates HTTP Basic Authentication.
+	AuthTypeBasic = "basic"
+
+	// AuthTypeBearer indicates Bearer Token Authentication.
+	AuthTypeBearer = "bearer"
+
+	// AuthTypeAPIKey indicates API Key Authentication.
+	AuthTypeAPIKey = "apikey"
+)
+
 // AuthConfig represents an authentication configuration that can be applied to HTTP requests.
 // Different authentication mechanisms (Basic, Bearer, API Key) implement this interface.
 type AuthConfig interface {
@@ -14,7 +29,7 @@ type AuthConfig interface {
 	// Returns an error if the authentication cannot be applied.
 	Apply(req *http.Request) error
 
-	// Type returns the authentication type (e.g., "basic", "bearer", "apikey", "none").
+	// Type returns the authentication type (e.g., AuthTypeBasic, AuthTypeBearer, AuthTypeAPIKey, AuthTypeNone).
 	Type() string
 
 	// Validate checks if the authentication configuration is valid and complete.
@@ -30,13 +45,13 @@ func NewNoAuth() *NoAuth {
 }
 
 // Apply does nothing since no authentication is required.
-func (a *NoAuth) Apply(req *http.Request) error {
+func (a *NoAuth) Apply(_ *http.Request) error {
 	return nil
 }
 
-// Type returns "none".
+// Type returns AuthTypeNone.
 func (a *NoAuth) Type() string {
-	return "none"
+	return AuthTypeNone
 }
 
 // Validate always returns nil since no configuration is required.
@@ -65,7 +80,7 @@ func (a *BasicAuth) Apply(req *http.Request) error {
 		return err
 	}
 
-	// Encode username:password in base64
+	// Encode username:password in base64.
 	credentials := fmt.Sprintf("%s:%s", a.Username, a.Password)
 	encoded := base64.StdEncoding.EncodeToString([]byte(credentials))
 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", encoded))
@@ -73,9 +88,9 @@ func (a *BasicAuth) Apply(req *http.Request) error {
 	return nil
 }
 
-// Type returns "basic".
+// Type returns AuthTypeBasic.
 func (a *BasicAuth) Type() string {
-	return "basic"
+	return AuthTypeBasic
 }
 
 // Validate checks if username and password are provided.
@@ -112,9 +127,9 @@ func (a *BearerAuth) Apply(req *http.Request) error {
 	return nil
 }
 
-// Type returns "bearer".
+// Type returns AuthTypeBearer.
 func (a *BearerAuth) Type() string {
-	return "bearer"
+	return AuthTypeBearer
 }
 
 // Validate checks if the token is provided.
@@ -173,9 +188,9 @@ func (a *APIKeyAuth) Apply(req *http.Request) error {
 	return nil
 }
 
-// Type returns "apikey".
+// Type returns AuthTypeAPIKey.
 func (a *APIKeyAuth) Type() string {
-	return "apikey"
+	return AuthTypeAPIKey
 }
 
 // Validate checks if all required fields are provided and valid.

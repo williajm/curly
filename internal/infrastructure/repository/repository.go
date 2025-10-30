@@ -1,3 +1,4 @@
+// Package repository defines interfaces for data persistence operations.
 package repository
 
 import (
@@ -7,7 +8,7 @@ import (
 )
 
 // RequestRepository defines operations for persisting and retrieving HTTP requests.
-// Implementations should handle serialization of complex fields (headers, auth config)
+// Implementations should handle serialization of complex fields (headers, auth config).
 // and ensure proper transactional semantics where appropriate.
 type RequestRepository interface {
 	// Create persists a new request to the repository.
@@ -34,31 +35,31 @@ type RequestRepository interface {
 // HistoryEntry represents a single execution of an HTTP request.
 // It captures the response details and any errors that occurred.
 type HistoryEntry struct {
-	// ID is a unique identifier for this history entry
+	// ID is a unique identifier for this history entry.
 	ID string
 
-	// RequestID links this history entry to a saved request (may be empty for ad-hoc requests)
+	// RequestID links this history entry to a saved request (may be empty for ad-hoc requests).
 	RequestID string
 
-	// ExecutedAt is when the request was executed
+	// ExecutedAt is when the request was executed.
 	ExecutedAt string
 
-	// StatusCode is the HTTP status code received
+	// StatusCode is the HTTP status code received.
 	StatusCode int
 
-	// Status is the HTTP status text
+	// Status is the HTTP status text.
 	Status string
 
-	// ResponseTimeMs is how long the request took in milliseconds
+	// ResponseTimeMs is how long the request took in milliseconds.
 	ResponseTimeMs int64
 
-	// ResponseHeaders contains the response headers as JSON
+	// ResponseHeaders contains the response headers as JSON.
 	ResponseHeaders string
 
-	// ResponseBody is the response body content
+	// ResponseBody is the response body content.
 	ResponseBody string
 
-	// Error contains the error message if the request failed, empty on success
+	// Error contains the error message if the request failed, empty on success.
 	Error string
 }
 

@@ -1,6 +1,6 @@
 // Package app provides application-level services that orchestrate business logic.
 //
-// Services in this package coordinate between the domain layer (business rules)
+// Services in this package coordinate between the domain layer (business rules).
 // and infrastructure layer (persistence, HTTP, etc.) to implement use cases.
 package app
 
@@ -58,20 +58,20 @@ func NewRequestService(
 // CreateRequest creates a new request with validation.
 // It generates a unique ID and sets timestamps.
 // Returns an error if the request is invalid or cannot be persisted.
-func (s *RequestService) CreateRequest(ctx context.Context, req *domain.Request) (*domain.Request, error) {
-	// Ensure ID is set
+func (s *RequestService) CreateRequest(_ context.Context, req *domain.Request) (*domain.Request, error) {
+	// Ensure ID is set.
 	if req.ID == "" {
 		req.ID = uuid.New().String()
 	}
 
-	// Set timestamps
+	// Set timestamps.
 	now := time.Now()
 	if req.CreatedAt.IsZero() {
 		req.CreatedAt = now
 	}
 	req.UpdatedAt = now
 
-	// Validate request
+	// Validate request.
 	if err := req.Validate(); err != nil {
 		s.logger.Warn("request validation failed",
 			"request_id", req.ID,
@@ -94,7 +94,7 @@ func (s *RequestService) CreateRequest(ctx context.Context, req *domain.Request)
 // It validates the request, applies authentication, and captures timing metrics.
 // The request is NOT saved to the repository - use ExecuteAndSave for that.
 func (s *RequestService) ExecuteRequest(ctx context.Context, req *domain.Request) (*domain.Response, error) {
-	// Validate request before execution
+	// Validate request before execution.
 	if err := req.Validate(); err != nil {
 		s.logger.Warn("request validation failed before execution",
 			"request_id", req.ID,
@@ -109,7 +109,7 @@ func (s *RequestService) ExecuteRequest(ctx context.Context, req *domain.Request
 		"url", req.URL,
 	)
 
-	// Execute HTTP request
+	// Execute HTTP request.
 	resp, err := s.httpClient.Execute(ctx, req)
 	if err != nil {
 		s.logger.Error("request execution failed",
@@ -134,7 +134,7 @@ func (s *RequestService) ExecuteRequest(ctx context.Context, req *domain.Request
 // If the request already exists (by ID), it will be updated.
 // Returns an error if the request cannot be saved.
 func (s *RequestService) SaveRequest(ctx context.Context, req *domain.Request) error {
-	// Validate before saving
+	// Validate before saving.
 	if err := req.Validate(); err != nil {
 		s.logger.Warn("cannot save invalid request",
 			"request_id", req.ID,
@@ -148,10 +148,10 @@ func (s *RequestService) SaveRequest(ctx context.Context, req *domain.Request) e
 		"name", req.Name,
 	)
 
-	// Check if request exists
+	// Check if request exists.
 	existing, err := s.repo.FindByID(ctx, req.ID)
 	if err == nil && existing != nil {
-		// Request exists, update it
+		// Request exists, update it.
 		req.UpdatedAt = time.Now()
 		if err := s.repo.Update(ctx, req); err != nil {
 			s.logger.Error("failed to update request",
@@ -164,7 +164,7 @@ func (s *RequestService) SaveRequest(ctx context.Context, req *domain.Request) e
 		return nil
 	}
 
-	// Request doesn't exist, create it
+	// Request doesn't exist, create it.
 	if err := s.repo.Create(ctx, req); err != nil {
 		s.logger.Error("failed to create request",
 			"request_id", req.ID,
@@ -232,15 +232,15 @@ func (s *RequestService) DeleteRequest(ctx context.Context, id string) error {
 }
 
 // ExecuteAndSave executes a request and saves the result to history.
-// This is an atomic operation that:
-// 1. Validates the request
-// 2. Executes the HTTP request
-// 3. Saves the execution to history (even if the HTTP request failed)
-// 4. Returns the response
+// This is an atomic operation that:.
+// 1. Validates the request.
+// 2. Executes the HTTP request.
+// 3. Saves the execution to history (even if the HTTP request failed).
+// 4. Returns the response.
 //
 // If saving to history fails, it logs the error but doesn't fail the request.
 func (s *RequestService) ExecuteAndSave(ctx context.Context, req *domain.Request) (*domain.Response, error) {
-	// Validate request
+	// Validate request.
 	if err := req.Validate(); err != nil {
 		s.logger.Warn("request validation failed",
 			"request_id", req.ID,
@@ -255,10 +255,10 @@ func (s *RequestService) ExecuteAndSave(ctx context.Context, req *domain.Request
 		"url", req.URL,
 	)
 
-	// Execute HTTP request
+	// Execute HTTP request.
 	resp, err := s.httpClient.Execute(ctx, req)
 
-	// Create history entry regardless of success or failure
+	// Create history entry regardless of success or failure.
 	historyEntry := &repository.HistoryEntry{
 		ID:             uuid.New().String(),
 		RequestID:      req.ID,
@@ -267,23 +267,23 @@ func (s *RequestService) ExecuteAndSave(ctx context.Context, req *domain.Request
 	}
 
 	if err != nil {
-		// Request failed - record the error
+		// Request failed - record the error.
 		historyEntry.Error = err.Error()
 		s.logger.Error("request execution failed",
 			"request_id", req.ID,
 			"error", err,
 		)
 	} else {
-		// Request succeeded - record the response
+		// Request succeeded - record the response.
 		historyEntry.StatusCode = resp.StatusCode
 		historyEntry.Status = resp.Status
 		historyEntry.ResponseTimeMs = resp.DurationMillis()
 		historyEntry.ResponseBody = resp.Body
 
-		// Convert headers map to JSON string using proper JSON marshaling
+		// Convert headers map to JSON string using proper JSON marshaling.
 		headersBytes, err := json.Marshal(resp.Headers)
 		if err != nil {
-			// If marshaling fails, use empty JSON object
+			// If marshaling fails, use empty JSON object.
 			s.logger.Error("failed to marshal response headers", "error", err)
 			historyEntry.ResponseHeaders = "{}"
 		} else {
@@ -297,14 +297,14 @@ func (s *RequestService) ExecuteAndSave(ctx context.Context, req *domain.Request
 		)
 	}
 
-	// Save to history (best effort - don't fail the request if history save fails)
+	// Save to history (best effort - don't fail the request if history save fails).
 	if saveErr := s.historyRepo.Save(ctx, historyEntry); saveErr != nil {
 		s.logger.Error("failed to save execution to history",
 			"request_id", req.ID,
 			"history_id", historyEntry.ID,
 			"error", saveErr,
 		)
-		// Continue - we don't want to fail the request just because history save failed
+		// Continue - we don't want to fail the request just because history save failed.
 	} else {
 		s.logger.Debug("execution saved to history",
 			"request_id", req.ID,
@@ -312,7 +312,7 @@ func (s *RequestService) ExecuteAndSave(ctx context.Context, req *domain.Request
 		)
 	}
 
-	// Return the original error if execution failed
+	// Return the original error if execution failed.
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}

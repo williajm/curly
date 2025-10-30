@@ -5,7 +5,12 @@ import (
 	"time"
 )
 
-// TestNewResponse tests the NewResponse constructor
+// Test constants for repeated test values.
+const (
+	contentTypeJSON = "application/json"
+)
+
+// TestNewResponse tests the NewResponse constructor.
 func TestNewResponse(t *testing.T) {
 	resp := NewResponse()
 
@@ -17,7 +22,7 @@ func TestNewResponse(t *testing.T) {
 	}
 }
 
-// TestIsSuccess tests the IsSuccess method
+// TestIsSuccess tests the IsSuccess method.
 func TestIsSuccess(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -46,7 +51,7 @@ func TestIsSuccess(t *testing.T) {
 	}
 }
 
-// TestIsRedirect tests the IsRedirect method
+// TestIsRedirect tests the IsRedirect method.
 func TestIsRedirect(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -76,7 +81,7 @@ func TestIsRedirect(t *testing.T) {
 	}
 }
 
-// TestIsClientError tests the IsClientError method
+// TestIsClientError tests the IsClientError method.
 func TestIsClientError(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -105,7 +110,7 @@ func TestIsClientError(t *testing.T) {
 	}
 }
 
-// TestIsServerError tests the IsServerError method
+// TestIsServerError tests the IsServerError method.
 func TestIsServerError(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -134,7 +139,7 @@ func TestIsServerError(t *testing.T) {
 	}
 }
 
-// TestIsError tests the IsError method
+// TestIsError tests the IsError method.
 func TestIsError(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -162,7 +167,7 @@ func TestIsError(t *testing.T) {
 	}
 }
 
-// TestIsInformational tests the IsInformational method
+// TestIsInformational tests the IsInformational method.
 func TestIsInformational(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -189,7 +194,7 @@ func TestIsInformational(t *testing.T) {
 	}
 }
 
-// TestStatusClass tests the StatusClass method
+// TestStatusClass tests the StatusClass method.
 func TestStatusClass(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -217,7 +222,7 @@ func TestStatusClass(t *testing.T) {
 	}
 }
 
-// TestGetHeader tests the GetHeader method
+// TestGetHeader tests the GetHeader method.
 func TestGetHeader(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -228,16 +233,16 @@ func TestGetHeader(t *testing.T) {
 	}{
 		{
 			name:       "exact match",
-			headers:    map[string]string{"Content-Type": "application/json"},
+			headers:    map[string]string{"Content-Type": contentTypeJSON},
 			searchFor:  "Content-Type",
-			wantValue:  "application/json",
+			wantValue:  contentTypeJSON,
 			wantExists: true,
 		},
 		{
 			name:       "case insensitive match",
-			headers:    map[string]string{"Content-Type": "application/json"},
+			headers:    map[string]string{"Content-Type": contentTypeJSON},
 			searchFor:  "content-type",
-			wantValue:  "application/json",
+			wantValue:  contentTypeJSON,
 			wantExists: true,
 		},
 		{
@@ -249,7 +254,7 @@ func TestGetHeader(t *testing.T) {
 		},
 		{
 			name:       "header not found",
-			headers:    map[string]string{"Content-Type": "application/json"},
+			headers:    map[string]string{"Content-Type": contentTypeJSON},
 			searchFor:  "Accept",
 			wantValue:  "",
 			wantExists: false,
@@ -281,7 +286,7 @@ func TestGetHeader(t *testing.T) {
 	}
 }
 
-// TestContentType tests the ContentType method
+// TestContentType tests the ContentType method.
 func TestContentType(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -290,8 +295,8 @@ func TestContentType(t *testing.T) {
 	}{
 		{
 			name:    "json content type",
-			headers: map[string]string{"Content-Type": "application/json"},
-			want:    "application/json",
+			headers: map[string]string{"Content-Type": contentTypeJSON},
+			want:    contentTypeJSON,
 		},
 		{
 			name:    "json with charset",
@@ -322,14 +327,14 @@ func TestContentType(t *testing.T) {
 	}
 }
 
-// TestIsJSON tests the IsJSON method
+// TestIsJSON tests the IsJSON method.
 func TestIsJSON(t *testing.T) {
 	tests := []struct {
 		name        string
 		contentType string
 		want        bool
 	}{
-		{"application/json", "application/json", true},
+		{contentTypeJSON, contentTypeJSON, true},
 		{"application/json with charset", "application/json; charset=utf-8", true},
 		{"json api", "application/vnd.api+json", true},
 		{"uppercase", "APPLICATION/JSON", true},
@@ -354,7 +359,7 @@ func TestIsJSON(t *testing.T) {
 	}
 }
 
-// TestIsXML tests the IsXML method
+// TestIsXML tests the IsXML method.
 func TestIsXML(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -366,7 +371,7 @@ func TestIsXML(t *testing.T) {
 		{"application/xml with charset", "application/xml; charset=utf-8", true},
 		{"uppercase", "APPLICATION/XML", true},
 		{"mixed case", "Text/Xml", true},
-		{"application/json", "application/json", false},
+		{contentTypeJSON, contentTypeJSON, false},
 		{"text/plain", "text/plain", false},
 		{"empty", "", false},
 	}
@@ -385,7 +390,7 @@ func TestIsXML(t *testing.T) {
 	}
 }
 
-// TestIsHTML tests the IsHTML method
+// TestIsHTML tests the IsHTML method.
 func TestIsHTML(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -396,7 +401,7 @@ func TestIsHTML(t *testing.T) {
 		{"text/html with charset", "text/html; charset=utf-8", true},
 		{"uppercase", "TEXT/HTML", true},
 		{"mixed case", "Text/Html", true},
-		{"application/json", "application/json", false},
+		{contentTypeJSON, contentTypeJSON, false},
 		{"text/plain", "text/plain", false},
 		{"empty", "", false},
 	}
@@ -415,7 +420,7 @@ func TestIsHTML(t *testing.T) {
 	}
 }
 
-// TestIsText tests the IsText method
+// TestIsText tests the IsText method.
 func TestIsText(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -427,7 +432,7 @@ func TestIsText(t *testing.T) {
 		{"uppercase", "TEXT/PLAIN", true},
 		{"mixed case", "Text/Plain", true},
 		{"text/html", "text/html", false},
-		{"application/json", "application/json", false},
+		{contentTypeJSON, contentTypeJSON, false},
 		{"empty", "", false},
 	}
 
@@ -445,7 +450,7 @@ func TestIsText(t *testing.T) {
 	}
 }
 
-// TestDurationMillis tests the DurationMillis method
+// TestDurationMillis tests the DurationMillis method.
 func TestDurationMillis(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -470,7 +475,7 @@ func TestDurationMillis(t *testing.T) {
 	}
 }
 
-// TestDurationSeconds tests the DurationSeconds method
+// TestDurationSeconds tests the DurationSeconds method.
 func TestDurationSeconds(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -495,7 +500,7 @@ func TestDurationSeconds(t *testing.T) {
 	}
 }
 
-// TestEqualsFold tests the equalsFold helper function
+// TestEqualsFold tests the equalsFold helper function.
 func TestEqualsFold(t *testing.T) {
 	tests := []struct {
 		name string
@@ -522,7 +527,7 @@ func TestEqualsFold(t *testing.T) {
 	}
 }
 
-// TestContains tests the contains helper function
+// TestContains tests the contains helper function.
 func TestContains(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -530,13 +535,13 @@ func TestContains(t *testing.T) {
 		substr string
 		want   bool
 	}{
-		{"exact match", "application/json", "application/json", true},
-		{"substring at start", "application/json", "application", true},
-		{"substring at end", "application/json", "json", true},
-		{"substring in middle", "application/json", "tion/j", true},
-		{"case insensitive", "Application/JSON", "application/json", true},
-		{"case insensitive reverse", "application/json", "APPLICATION/JSON", true},
-		{"not found", "application/json", "xml", false},
+		{"exact match", contentTypeJSON, contentTypeJSON, true},
+		{"substring at start", contentTypeJSON, "application", true},
+		{"substring at end", contentTypeJSON, "json", true},
+		{"substring in middle", contentTypeJSON, "tion/j", true},
+		{"case insensitive", "Application/JSON", contentTypeJSON, true},
+		{"case insensitive reverse", contentTypeJSON, "APPLICATION/JSON", true},
+		{"not found", contentTypeJSON, "xml", false},
 		{"empty substring", "test", "", true},
 		{"empty string", "", "test", false},
 		{"both empty", "", "", true},
@@ -552,13 +557,13 @@ func TestContains(t *testing.T) {
 	}
 }
 
-// TestResponseWithAllFields tests a response with all fields populated
+// TestResponseWithAllFields tests a response with all fields populated.
 func TestResponseWithAllFields(t *testing.T) {
 	resp := NewResponse()
 	resp.StatusCode = 200
 	resp.Status = "200 OK"
 	resp.Headers = map[string]string{
-		"Content-Type":   "application/json",
+		"Content-Type":   contentTypeJSON,
 		"Content-Length": "123",
 	}
 	resp.Body = `{"message": "success"}`
@@ -566,7 +571,7 @@ func TestResponseWithAllFields(t *testing.T) {
 	resp.Duration = 250 * time.Millisecond
 	resp.RequestID = "test-request-123"
 
-	// Verify all fields
+	// Verify all fields.
 	if resp.StatusCode != 200 {
 		t.Errorf("StatusCode = %d, want 200", resp.StatusCode)
 	}
@@ -579,7 +584,7 @@ func TestResponseWithAllFields(t *testing.T) {
 	if resp.IsError() {
 		t.Error("expected IsError() to be false")
 	}
-	if resp.ContentType() != "application/json" {
+	if resp.ContentType() != contentTypeJSON {
 		t.Errorf("ContentType() = %s, want 'application/json'", resp.ContentType())
 	}
 	if !resp.IsJSON() {
@@ -596,7 +601,7 @@ func TestResponseWithAllFields(t *testing.T) {
 	}
 }
 
-// BenchmarkIsSuccess benchmarks the IsSuccess method
+// BenchmarkIsSuccess benchmarks the IsSuccess method.
 func BenchmarkIsSuccess(b *testing.B) {
 	resp := NewResponse()
 	resp.StatusCode = 200
@@ -607,14 +612,14 @@ func BenchmarkIsSuccess(b *testing.B) {
 	}
 }
 
-// BenchmarkGetHeader benchmarks the GetHeader method
+// BenchmarkGetHeader benchmarks the GetHeader method.
 func BenchmarkGetHeader(b *testing.B) {
 	resp := NewResponse()
 	resp.Headers = map[string]string{
-		"Content-Type":   "application/json",
+		"Content-Type":   contentTypeJSON,
 		"Content-Length": "123",
 		"Authorization":  "Bearer token",
-		"Accept":         "application/json",
+		"Accept":         contentTypeJSON,
 	}
 
 	b.ResetTimer()
@@ -623,14 +628,14 @@ func BenchmarkGetHeader(b *testing.B) {
 	}
 }
 
-// BenchmarkGetHeaderCaseInsensitive benchmarks case-insensitive header lookup
+// BenchmarkGetHeaderCaseInsensitive benchmarks case-insensitive header lookup.
 func BenchmarkGetHeaderCaseInsensitive(b *testing.B) {
 	resp := NewResponse()
 	resp.Headers = map[string]string{
-		"Content-Type":   "application/json",
+		"Content-Type":   contentTypeJSON,
 		"Content-Length": "123",
 		"Authorization":  "Bearer token",
-		"Accept":         "application/json",
+		"Accept":         contentTypeJSON,
 	}
 
 	b.ResetTimer()
@@ -639,7 +644,7 @@ func BenchmarkGetHeaderCaseInsensitive(b *testing.B) {
 	}
 }
 
-// BenchmarkIsJSON benchmarks the IsJSON method
+// BenchmarkIsJSON benchmarks the IsJSON method.
 func BenchmarkIsJSON(b *testing.B) {
 	resp := NewResponse()
 	resp.Headers = map[string]string{"Content-Type": "application/json; charset=utf-8"}
@@ -650,7 +655,7 @@ func BenchmarkIsJSON(b *testing.B) {
 	}
 }
 
-// BenchmarkStatusClass benchmarks the StatusClass method
+// BenchmarkStatusClass benchmarks the StatusClass method.
 func BenchmarkStatusClass(b *testing.B) {
 	resp := NewResponse()
 	resp.StatusCode = 404

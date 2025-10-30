@@ -1,18 +1,26 @@
 package domain
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
 
-// TestNewRequest tests the NewRequest constructor
+// Test constants for repeated test values.
+const (
+	testURL        = "https://api.example.com/users"
+	testURLExample = "https://example.com"
+	testJSONBody   = `{"name": "test"}`
+)
+
+// TestNewRequest tests the NewRequest constructor.
 func TestNewRequest(t *testing.T) {
 	req := NewRequest()
 
 	if req.ID == "" {
 		t.Error("expected ID to be generated")
 	}
-	if req.Method != "GET" {
+	if req.Method != MethodGet {
 		t.Errorf("expected default method to be 'GET', got '%s'", req.Method)
 	}
 	if req.Headers == nil {
@@ -35,14 +43,14 @@ func TestNewRequest(t *testing.T) {
 	}
 }
 
-// TestNewRequestWithMethodAndURL tests the convenience constructor
+// TestNewRequestWithMethodAndURL tests the convenience constructor.
 func TestNewRequestWithMethodAndURL(t *testing.T) {
-	req := NewRequestWithMethodAndURL("POST", "https://api.example.com/users")
+	req := NewRequestWithMethodAndURL(MethodPost, testURL)
 
-	if req.Method != "POST" {
+	if req.Method != MethodPost {
 		t.Errorf("expected method to be 'POST', got '%s'", req.Method)
 	}
-	if req.URL != "https://api.example.com/users" {
+	if req.URL != testURL {
 		t.Errorf("expected URL to be set, got '%s'", req.URL)
 	}
 	if req.ID == "" {
@@ -50,15 +58,15 @@ func TestNewRequestWithMethodAndURL(t *testing.T) {
 	}
 }
 
-// TestValidateMethod tests the ValidateMethod function
+// TestValidateMethod tests the ValidateMethod function.
 func TestValidateMethod(t *testing.T) {
 	tests := []struct {
 		name    string
 		method  string
 		wantErr error
 	}{
-		{"GET", "GET", nil},
-		{"POST", "POST", nil},
+		{MethodGet, MethodGet, nil},
+		{MethodPost, MethodPost, nil},
 		{"PUT", "PUT", nil},
 		{"PATCH", "PATCH", nil},
 		{"DELETE", "DELETE", nil},
@@ -78,14 +86,14 @@ func TestValidateMethod(t *testing.T) {
 			req.Method = tt.method
 
 			err := req.ValidateMethod()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("ValidateMethod() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-// TestValidateURL tests the ValidateURL function
+// TestValidateURL tests the ValidateURL function.
 func TestValidateURL(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -93,7 +101,7 @@ func TestValidateURL(t *testing.T) {
 		wantErr error
 	}{
 		{"valid http", "http://example.com", nil},
-		{"valid https", "https://example.com", nil},
+		{"valid https", testURLExample, nil},
 		{"valid with path", "https://api.example.com/v1/users", nil},
 		{"valid with query", "https://example.com/search?q=test", nil},
 		{"valid with port", "https://example.com:8080/api", nil},
@@ -115,14 +123,14 @@ func TestValidateURL(t *testing.T) {
 			req.URL = tt.url
 
 			err := req.ValidateURL()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("ValidateURL() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-// TestValidateHeaders tests the ValidateHeaders function
+// TestValidateHeaders tests the ValidateHeaders function.
 func TestValidateHeaders(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -146,27 +154,27 @@ func TestValidateHeaders(t *testing.T) {
 		},
 		{
 			name:    "header with empty name",
-			headers: map[string]string{"": "value"},
+			headers: map[string]string{"": testValue},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
 			name:    "header with whitespace name",
-			headers: map[string]string{"   ": "value"},
+			headers: map[string]string{"   ": testValue},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
 			name:    "header with colon in name",
-			headers: map[string]string{"Invalid:Header": "value"},
+			headers: map[string]string{"Invalid:Header": testValue},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
 			name:    "header with newline in name",
-			headers: map[string]string{"Invalid\nHeader": "value"},
+			headers: map[string]string{"Invalid\nHeader": testValue},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
 			name:    "header with carriage return in name",
-			headers: map[string]string{"Invalid\rHeader": "value"},
+			headers: map[string]string{"Invalid\rHeader": testValue},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
@@ -182,14 +190,14 @@ func TestValidateHeaders(t *testing.T) {
 			req.Headers = tt.headers
 
 			err := req.ValidateHeaders()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("ValidateHeaders() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-// TestValidateQueryParams tests the ValidateQueryParams function
+// TestValidateQueryParams tests the ValidateQueryParams function.
 func TestValidateQueryParams(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -213,12 +221,12 @@ func TestValidateQueryParams(t *testing.T) {
 		},
 		{
 			name:        "param with empty name",
-			queryParams: map[string]string{"": "value"},
+			queryParams: map[string]string{"": testValue},
 			wantErr:     ErrInvalidQueryParam,
 		},
 		{
 			name:        "param with whitespace name",
-			queryParams: map[string]string{"   ": "value"},
+			queryParams: map[string]string{"   ": testValue},
 			wantErr:     ErrInvalidQueryParam,
 		},
 		{
@@ -234,14 +242,14 @@ func TestValidateQueryParams(t *testing.T) {
 			req.QueryParams = tt.queryParams
 
 			err := req.ValidateQueryParams()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("ValidateQueryParams() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-// TestValidate tests the overall Validate function
+// TestValidate tests the overall Validate function.
 func TestValidate(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -251,11 +259,11 @@ func TestValidate(t *testing.T) {
 		{
 			name: "fully valid request",
 			setup: func(r *Request) {
-				r.Method = "POST"
-				r.URL = "https://api.example.com/users"
+				r.Method = MethodPost
+				r.URL = testURL
 				r.Headers = map[string]string{"Content-Type": "application/json"}
 				r.QueryParams = map[string]string{"version": "v1"}
-				r.Body = `{"name": "test"}`
+				r.Body = testJSONBody
 				r.AuthConfig = NewBearerAuth("token123")
 			},
 			wantErr: nil,
@@ -263,8 +271,8 @@ func TestValidate(t *testing.T) {
 		{
 			name: "minimal valid request",
 			setup: func(r *Request) {
-				r.Method = "GET"
-				r.URL = "https://example.com"
+				r.Method = MethodGet
+				r.URL = testURLExample
 			},
 			wantErr: nil,
 		},
@@ -272,14 +280,14 @@ func TestValidate(t *testing.T) {
 			name: "invalid method",
 			setup: func(r *Request) {
 				r.Method = "INVALID"
-				r.URL = "https://example.com"
+				r.URL = testURLExample
 			},
 			wantErr: ErrInvalidMethod,
 		},
 		{
 			name: "invalid url",
 			setup: func(r *Request) {
-				r.Method = "GET"
+				r.Method = MethodGet
 				r.URL = "not-a-url"
 			},
 			wantErr: ErrInvalidURL,
@@ -287,26 +295,26 @@ func TestValidate(t *testing.T) {
 		{
 			name: "invalid header",
 			setup: func(r *Request) {
-				r.Method = "GET"
-				r.URL = "https://example.com"
-				r.Headers = map[string]string{"Invalid:Header": "value"}
+				r.Method = MethodGet
+				r.URL = testURLExample
+				r.Headers = map[string]string{"Invalid:Header": testValue}
 			},
 			wantErr: ErrInvalidHeaderName,
 		},
 		{
 			name: "invalid query param",
 			setup: func(r *Request) {
-				r.Method = "GET"
-				r.URL = "https://example.com"
-				r.QueryParams = map[string]string{"": "value"}
+				r.Method = MethodGet
+				r.URL = testURLExample
+				r.QueryParams = map[string]string{"": testValue}
 			},
 			wantErr: ErrInvalidQueryParam,
 		},
 		{
 			name: "invalid auth config",
 			setup: func(r *Request) {
-				r.Method = "GET"
-				r.URL = "https://example.com"
+				r.Method = MethodGet
+				r.URL = testURLExample
 				r.AuthConfig = NewBasicAuth("", "")
 			},
 			wantErr: ErrMissingUsername,
@@ -319,19 +327,19 @@ func TestValidate(t *testing.T) {
 			tt.setup(req)
 
 			err := req.Validate()
-			if err != tt.wantErr {
+			if (tt.wantErr == nil && err != nil) || (tt.wantErr != nil && !errors.Is(err, tt.wantErr)) {
 				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
 }
 
-// TestSetHeader tests the SetHeader method
+// TestSetHeader tests the SetHeader method.
 func TestSetHeader(t *testing.T) {
 	req := NewRequest()
 	originalTime := req.UpdatedAt
 
-	// Small delay to ensure time difference
+	// Small delay to ensure time difference.
 	time.Sleep(2 * time.Millisecond)
 
 	t.Run("set new header", func(t *testing.T) {
@@ -362,12 +370,12 @@ func TestSetHeader(t *testing.T) {
 	})
 }
 
-// TestSetQueryParam tests the SetQueryParam method
+// TestSetQueryParam tests the SetQueryParam method.
 func TestSetQueryParam(t *testing.T) {
 	req := NewRequest()
 	originalTime := req.UpdatedAt
 
-	// Small delay to ensure time difference
+	// Small delay to ensure time difference.
 	time.Sleep(2 * time.Millisecond)
 
 	t.Run("set new query param", func(t *testing.T) {
@@ -398,12 +406,12 @@ func TestSetQueryParam(t *testing.T) {
 	})
 }
 
-// TestSetAuth tests the SetAuth method
+// TestSetAuth tests the SetAuth method.
 func TestSetAuth(t *testing.T) {
 	req := NewRequest()
 	originalTime := req.UpdatedAt
 
-	// Small delay to ensure time difference
+	// Small delay to ensure time difference.
 	time.Sleep(2 * time.Millisecond)
 
 	auth := NewBearerAuth("token123")
@@ -417,21 +425,21 @@ func TestSetAuth(t *testing.T) {
 	}
 }
 
-// TestClone tests the Clone method
+// TestClone tests the Clone method.
 func TestClone(t *testing.T) {
 	original := NewRequest()
 	original.ID = "test-id"
 	original.Name = "Test Request"
-	original.Method = "POST"
-	original.URL = "https://api.example.com/users"
+	original.Method = MethodPost
+	original.URL = testURL
 	original.Headers = map[string]string{"Content-Type": "application/json"}
 	original.QueryParams = map[string]string{"version": "v1"}
-	original.Body = `{"name": "test"}`
+	original.Body = testJSONBody
 	original.AuthConfig = NewBearerAuth("token123")
 
 	clone := original.Clone()
 
-	// Test that all fields are copied
+	// Test that all fields are copied.
 	if clone.ID != original.ID {
 		t.Error("ID not copied correctly")
 	}
@@ -451,8 +459,8 @@ func TestClone(t *testing.T) {
 		t.Error("AuthConfig not copied correctly")
 	}
 
-	// Test that maps are deep copied
-	clone.Headers["X-Custom"] = "value"
+	// Test that maps are deep copied.
+	clone.Headers["X-Custom"] = testValue
 	if _, exists := original.Headers["X-Custom"]; exists {
 		t.Error("modifying clone's headers affected original")
 	}
@@ -462,7 +470,7 @@ func TestClone(t *testing.T) {
 		t.Error("modifying clone's query params affected original")
 	}
 
-	// Test that original map values are preserved
+	// Test that original map values are preserved.
 	if clone.Headers["Content-Type"] != "application/json" {
 		t.Error("header not copied correctly")
 	}
@@ -471,17 +479,17 @@ func TestClone(t *testing.T) {
 	}
 }
 
-// TestIsBodyAllowed tests the IsBodyAllowed method
+// TestIsBodyAllowed tests the IsBodyAllowed method.
 func TestIsBodyAllowed(t *testing.T) {
 	tests := []struct {
 		name    string
 		method  string
 		allowed bool
 	}{
-		{"POST allows body", "POST", true},
+		{"POST allows body", MethodPost, true},
 		{"PUT allows body", "PUT", true},
 		{"PATCH allows body", "PATCH", true},
-		{"GET does not allow body", "GET", false},
+		{"GET does not allow body", MethodGet, false},
 		{"DELETE does not allow body", "DELETE", false},
 		{"HEAD does not allow body", "HEAD", false},
 		{"OPTIONS does not allow body", "OPTIONS", false},
@@ -501,9 +509,9 @@ func TestIsBodyAllowed(t *testing.T) {
 	}
 }
 
-// TestSupportedMethods verifies the list of supported methods
+// TestSupportedMethods verifies the list of supported methods.
 func TestSupportedMethods(t *testing.T) {
-	expected := []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
+	expected := []string{MethodGet, MethodPost, "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"}
 
 	if len(SupportedMethods) != len(expected) {
 		t.Errorf("expected %d supported methods, got %d", len(expected), len(SupportedMethods))
@@ -523,49 +531,49 @@ func TestSupportedMethods(t *testing.T) {
 	}
 }
 
-// TestRequestInitialization tests that requests are properly initialized with nil maps
+// TestRequestInitialization tests that requests are properly initialized with nil maps.
 func TestRequestInitialization(t *testing.T) {
 	t.Run("NewRequest initializes maps", func(t *testing.T) {
 		req := NewRequest()
 
-		// Should not panic when adding to maps
-		req.Headers["test"] = "value"
-		req.QueryParams["test"] = "value"
+		// Should not panic when adding to maps.
+		req.Headers["test"] = testValue
+		req.QueryParams["test"] = testValue
 
-		if req.Headers["test"] != "value" {
+		if req.Headers["test"] != testValue {
 			t.Error("failed to add to initialized Headers map")
 		}
-		if req.QueryParams["test"] != "value" {
+		if req.QueryParams["test"] != testValue {
 			t.Error("failed to add to initialized QueryParams map")
 		}
 	})
 
 	t.Run("SetHeader initializes map if nil", func(t *testing.T) {
 		req := &Request{}
-		req.SetHeader("test", "value")
+		req.SetHeader("test", testValue)
 
 		if req.Headers == nil {
 			t.Error("SetHeader should initialize Headers map")
 		}
-		if req.Headers["test"] != "value" {
+		if req.Headers["test"] != testValue {
 			t.Error("header not set correctly")
 		}
 	})
 
 	t.Run("SetQueryParam initializes map if nil", func(t *testing.T) {
 		req := &Request{}
-		req.SetQueryParam("test", "value")
+		req.SetQueryParam("test", testValue)
 
 		if req.QueryParams == nil {
 			t.Error("SetQueryParam should initialize QueryParams map")
 		}
-		if req.QueryParams["test"] != "value" {
+		if req.QueryParams["test"] != testValue {
 			t.Error("query param not set correctly")
 		}
 	})
 }
 
-// BenchmarkValidateURL benchmarks URL validation
+// BenchmarkValidateURL benchmarks URL validation.
 func BenchmarkValidateURL(b *testing.B) {
 	req := NewRequest()
 	req.URL = "https://api.example.com/v1/users?page=1&limit=10"
@@ -576,18 +584,18 @@ func BenchmarkValidateURL(b *testing.B) {
 	}
 }
 
-// BenchmarkValidate benchmarks full request validation
+// BenchmarkValidate benchmarks full request validation.
 func BenchmarkValidate(b *testing.B) {
 	req := NewRequest()
-	req.Method = "POST"
-	req.URL = "https://api.example.com/users"
+	req.Method = MethodPost
+	req.URL = testURL
 	req.Headers = map[string]string{
 		"Content-Type":  "application/json",
 		"Accept":        "application/json",
 		"Authorization": "Bearer token123",
 	}
 	req.QueryParams = map[string]string{"version": "v1"}
-	req.Body = `{"name": "test"}`
+	req.Body = testJSONBody
 	req.AuthConfig = NewBearerAuth("token123")
 
 	b.ResetTimer()
@@ -596,17 +604,17 @@ func BenchmarkValidate(b *testing.B) {
 	}
 }
 
-// BenchmarkClone benchmarks request cloning
+// BenchmarkClone benchmarks request cloning.
 func BenchmarkClone(b *testing.B) {
 	req := NewRequest()
-	req.Method = "POST"
-	req.URL = "https://api.example.com/users"
+	req.Method = MethodPost
+	req.URL = testURL
 	req.Headers = map[string]string{
 		"Content-Type": "application/json",
 		"Accept":       "application/json",
 	}
 	req.QueryParams = map[string]string{"version": "v1"}
-	req.Body = `{"name": "test"}`
+	req.Body = testJSONBody
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

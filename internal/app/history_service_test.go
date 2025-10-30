@@ -202,13 +202,13 @@ func TestCleanupOldHistory_Success(t *testing.T) {
 
 	daysToKeep := 30
 
-	// Calculate expected cutoff timestamp
+	// Calculate expected cutoff timestamp.
 	cutoffTime := time.Now().UTC().AddDate(0, 0, -daysToKeep)
 	expectedCutoff := cutoffTime.Format(time.RFC3339)
 
 	repo.On("DeleteOlderThan", mock.Anything, mock.MatchedBy(func(timestamp string) bool {
-		// Check that the timestamp is close to our expected cutoff
-		// Allow for small time differences due to test execution time
+		// Check that the timestamp is close to our expected cutoff.
+		// Allow for small time differences due to test execution time.
 		parsedTime, err := time.Parse(time.RFC3339, timestamp)
 		if err != nil {
 			return false
@@ -224,7 +224,7 @@ func TestCleanupOldHistory_Success(t *testing.T) {
 
 	repo.AssertExpectations(t)
 
-	// Verify the timestamp format is correct
+	// Verify the timestamp format is correct.
 	parsedTime, parseErr := time.Parse(time.RFC3339, expectedCutoff)
 	assert.NoError(t, parseErr)
 	assert.NotNil(t, parsedTime)
@@ -266,7 +266,7 @@ func TestCleanupOldHistory_ZeroDays(t *testing.T) {
 
 	service := NewHistoryService(repo, logger)
 
-	// Zero days means delete everything older than today
+	// Zero days means delete everything older than today.
 	repo.On("DeleteOlderThan", mock.Anything, mock.Anything).Return(int64(10), nil)
 
 	count, err := service.CleanupOldHistory(context.Background(), 0)

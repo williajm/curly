@@ -11,23 +11,23 @@ import (
 	"github.com/williajm/curly/internal/infrastructure/repository"
 )
 
-// HistoryModel represents the history browser
+// HistoryModel represents the history browser.
 type HistoryModel struct {
-	// Services
+	// Services.
 	historyService *app.HistoryService
 
-	// History entries
+	// History entries.
 	entries       []*repository.HistoryEntry
 	selectedIndex int
 	loading       bool
 	errorMsg      string
 
-	// UI dimensions
+	// UI dimensions.
 	width  int
 	height int
 }
 
-// Custom messages
+// Custom messages.
 type historyLoadedMsg struct {
 	entries []*repository.HistoryEntry
 	err     error
@@ -37,7 +37,7 @@ type historyDeletedMsg struct {
 	err error
 }
 
-// NewHistoryModel creates a new history browser model
+// NewHistoryModel creates a new history browser model.
 func NewHistoryModel(historyService *app.HistoryService) HistoryModel {
 	return HistoryModel{
 		historyService: historyService,
@@ -47,12 +47,12 @@ func NewHistoryModel(historyService *app.HistoryService) HistoryModel {
 	}
 }
 
-// Init initializes the model and loads history
+// Init initializes the model and loads history.
 func (m HistoryModel) Init() tea.Cmd {
 	return m.loadHistory()
 }
 
-// Update handles messages and updates the model
+// Update handles messages and updates the model.
 func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -61,7 +61,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		}
 
 		switch msg.String() {
-		case "ctrl+c":
+		case KeyCtrlC:
 			return m, tea.Quit
 
 		case "up", "k":
@@ -75,18 +75,18 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 			}
 
 		case "enter":
-			// Load selected history entry into request builder
-			// This will be handled by the main model
+			// Load selected history entry into request builder.
+			// This will be handled by the main model.
 			return m, nil
 
 		case "delete", "d":
-			// Delete selected history entry
+			// Delete selected history entry.
 			if len(m.entries) > 0 {
 				return m, m.deleteEntry(m.entries[m.selectedIndex].ID)
 			}
 
 		case "r":
-			// Refresh history
+			// Refresh history.
 			return m, m.loadHistory()
 
 		case "home", "g":
@@ -105,7 +105,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		} else {
 			m.entries = msg.entries
 			m.errorMsg = ""
-			// Ensure selected index is valid
+			// Ensure selected index is valid.
 			if m.selectedIndex >= len(m.entries) {
 				m.selectedIndex = max(0, len(m.entries)-1)
 			}
@@ -116,7 +116,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		if msg.err != nil {
 			m.errorMsg = msg.err.Error()
 		} else {
-			// Reload history after deletion
+			// Reload history after deletion.
 			return m, m.loadHistory()
 		}
 
@@ -128,7 +128,7 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the history browser
+// View renders the history browser.
 func (m HistoryModel) View() string {
 	var sections []string
 
@@ -152,19 +152,19 @@ func (m HistoryModel) View() string {
 		return strings.Join(sections, "\n")
 	}
 
-	// Header
+	// Header.
 	header := fmt.Sprintf("%-20s %-8s %-40s %-8s", "Time", "Method", "URL", "Status")
 	sections = append(sections, header)
 	sections = append(sections, strings.Repeat("─", 80))
 
-	// Entries
+	// Entries.
 	for i, entry := range m.entries {
 		cursor := "  "
 		if i == m.selectedIndex {
 			cursor = "> "
 		}
 
-		// Truncate URL if too long
+		// Truncate URL if too long.
 		url := entry.RequestID // We don't have URL in history entry, use ID for now
 		if len(url) > 40 {
 			url = url[:37] + "..."
@@ -175,12 +175,12 @@ func (m HistoryModel) View() string {
 			status = "Error"
 		}
 
-		// Format timestamp safely - parse RFC3339 and format to date+time only
+		// Format timestamp safely - parse RFC3339 and format to date+time only.
 		timestamp := entry.ExecutedAt
 		if t, err := time.Parse(time.RFC3339, entry.ExecutedAt); err == nil {
 			timestamp = t.Format("2006-01-02 15:04:05")
 		} else if len(entry.ExecutedAt) > 19 {
-			// Fallback to truncation if parse fails but string is long enough
+			// Fallback to truncation if parse fails but string is long enough.
 			timestamp = entry.ExecutedAt[:19]
 		}
 
@@ -200,7 +200,7 @@ func (m HistoryModel) View() string {
 	return strings.Join(sections, "\n")
 }
 
-// loadHistory creates a command to load history from the service
+// loadHistory creates a command to load history from the service.
 func (m *HistoryModel) loadHistory() tea.Cmd {
 	m.loading = true
 	return func() tea.Msg {
@@ -210,7 +210,7 @@ func (m *HistoryModel) loadHistory() tea.Cmd {
 	}
 }
 
-// deleteEntry creates a command to delete a history entry
+// deleteEntry creates a command to delete a history entry.
 func (m *HistoryModel) deleteEntry(id string) tea.Cmd {
 	m.loading = true
 	return func() tea.Msg {
@@ -220,7 +220,7 @@ func (m *HistoryModel) deleteEntry(id string) tea.Cmd {
 	}
 }
 
-// GetSelectedEntry returns the currently selected history entry
+// GetSelectedEntry returns the currently selected history entry.
 func (m *HistoryModel) GetSelectedEntry() *repository.HistoryEntry {
 	if m.selectedIndex >= 0 && m.selectedIndex < len(m.entries) {
 		return m.entries[m.selectedIndex]
@@ -228,20 +228,12 @@ func (m *HistoryModel) GetSelectedEntry() *repository.HistoryEntry {
 	return nil
 }
 
-// GetEntries returns all history entries
+// GetEntries returns all history entries.
 func (m *HistoryModel) GetEntries() []*repository.HistoryEntry {
 	return m.entries
 }
 
-// IsLoading returns whether history is currently being loaded
+// IsLoading returns whether history is currently being loaded.
 func (m *HistoryModel) IsLoading() bool {
 	return m.loading
-}
-
-// Helper function for max
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
 }

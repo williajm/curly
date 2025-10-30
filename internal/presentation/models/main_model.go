@@ -8,40 +8,40 @@ import (
 	"github.com/williajm/curly/internal/app"
 )
 
-// Tab indices
+// Tab indices.
 const (
 	TabRequest = iota
 	TabResponse
 	TabHistory
 )
 
-// MainModel is the root model with tab navigation
+// MainModel is the root model with tab navigation.
 type MainModel struct {
-	// Tab state
+	// Tab state.
 	tabs      []string
 	activeTab int
 
-	// Sub-models
+	// Sub-models.
 	requestModel  RequestModel
 	responseModel ResponseModel
 	historyModel  HistoryModel
 
-	// Services (injected from app initialization)
+	// Services (injected from app initialization).
 	requestService *app.RequestService
 	historyService *app.HistoryService
 	authService    *app.AuthService
 
-	// UI state
+	// UI state.
 	width     int
 	height    int
 	showHelp  bool
 	statusMsg string
 
-	// Flags
+	// Flags.
 	quitting bool
 }
 
-// NewMainModel creates a new main model with all sub-models
+// NewMainModel creates a new main model with all sub-models.
 func NewMainModel(
 	requestService *app.RequestService,
 	historyService *app.HistoryService,
@@ -60,7 +60,7 @@ func NewMainModel(
 	}
 }
 
-// Init initializes the main model and sub-models
+// Init initializes the main model and sub-models.
 func (m MainModel) Init() tea.Cmd {
 	return tea.Batch(
 		m.requestModel.Init(),
@@ -69,62 +69,62 @@ func (m MainModel) Init() tea.Cmd {
 	)
 }
 
-// Update handles messages and updates the model
+// Update handles messages and updates the model.
 func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Handle global keys
+		// Handle global keys.
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case KeyCtrlC, "q":
 			if !m.showHelp {
 				m.quitting = true
 				return m, tea.Quit
 			}
 
 		case "?":
-			// Toggle help screen
+			// Toggle help screen.
 			m.showHelp = !m.showHelp
 			return m, nil
 
 		case "esc":
-			// Close help screen
+			// Close help screen.
 			if m.showHelp {
 				m.showHelp = false
 				return m, nil
 			}
 
 		case "tab":
-			// Switch to next tab (but not if help is showing)
+			// Switch to next tab (but not if help is showing).
 			if !m.showHelp {
 				m.activeTab = (m.activeTab + 1) % len(m.tabs)
 				return m, nil
 			}
 
 		case "shift+tab":
-			// Switch to previous tab
+			// Switch to previous tab.
 			if !m.showHelp {
 				m.activeTab = (m.activeTab - 1 + len(m.tabs)) % len(m.tabs)
 				return m, nil
 			}
 
 		case "1":
-			// Jump to Request tab
+			// Jump to Request tab.
 			if !m.showHelp {
 				m.activeTab = TabRequest
 				return m, nil
 			}
 
 		case "2":
-			// Jump to Response tab
+			// Jump to Response tab.
 			if !m.showHelp {
 				m.activeTab = TabResponse
 				return m, nil
 			}
 
 		case "3":
-			// Jump to History tab
+			// Jump to History tab.
 			if !m.showHelp {
 				m.activeTab = TabHistory
 				return m, nil
@@ -136,15 +136,15 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case requestSentMsg:
-		// When a request is sent, update both request and response models
+		// When a request is sent, update both request and response models.
 		var cmd tea.Cmd
 		m.requestModel, cmd = m.requestModel.Update(msg)
 		cmds = append(cmds, cmd)
 
-		// Also update response model with the new response
+		// Also update response model with the new response.
 		if msg.response != nil {
 			m.responseModel.SetResponse(msg.response)
-			// Switch to response tab to show the result
+			// Switch to response tab to show the result.
 			m.activeTab = TabResponse
 			m.statusMsg = "Request completed successfully"
 		} else if msg.err != nil {
@@ -154,18 +154,18 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(cmds...)
 
 	case historyLoadedMsg, historyDeletedMsg:
-		// Pass history messages to history model
+		// Pass history messages to history model.
 		var cmd tea.Cmd
 		m.historyModel, cmd = m.historyModel.Update(msg)
 		return m, cmd
 	}
 
-	// Don't pass messages to sub-models if help is showing
+	// Don't pass messages to sub-models if help is showing.
 	if m.showHelp {
 		return m, nil
 	}
 
-	// Delegate to active sub-model
+	// Delegate to active sub-model.
 	var cmd tea.Cmd
 	switch m.activeTab {
 	case TabRequest:
@@ -184,25 +184,25 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-// View renders the main view with tabs
+// View renders the main view with tabs.
 func (m MainModel) View() string {
 	if m.quitting {
 		return "Thanks for using curly!\n"
 	}
 
-	// Show help overlay if active
+	// Show help overlay if active.
 	if m.showHelp {
 		return m.renderHelp()
 	}
 
 	var sections []string
 
-	// Render tabs
+	// Render tabs.
 	tabsView := m.renderTabs()
 	sections = append(sections, tabsView)
 	sections = append(sections, "")
 
-	// Render active view
+	// Render active view.
 	var activeView string
 	switch m.activeTab {
 	case TabRequest:
@@ -214,14 +214,14 @@ func (m MainModel) View() string {
 	}
 	sections = append(sections, activeView)
 
-	// Render status bar
+	// Render status bar.
 	sections = append(sections, "")
 	sections = append(sections, m.renderStatusBar())
 
 	return strings.Join(sections, "\n")
 }
 
-// renderTabs renders the tab navigation
+// renderTabs renders the tab navigation.
 func (m MainModel) renderTabs() string {
 	var parts []string
 	for i, tab := range m.tabs {
@@ -234,7 +234,7 @@ func (m MainModel) renderTabs() string {
 	return strings.Join(parts, " ")
 }
 
-// renderStatusBar renders the bottom status bar
+// renderStatusBar renders the bottom status bar.
 func (m MainModel) renderStatusBar() string {
 	if m.statusMsg != "" {
 		return m.statusMsg
@@ -242,7 +242,7 @@ func (m MainModel) renderStatusBar() string {
 	return "Press ? for help"
 }
 
-// renderHelp renders the help screen
+// renderHelp renders the help screen.
 func (m MainModel) renderHelp() string {
 	var sections []string
 
@@ -267,12 +267,12 @@ func (m MainModel) renderHelp() string {
 	return strings.Join(sections, "\n")
 }
 
-// GetActiveTab returns the currently active tab index
+// GetActiveTab returns the currently active tab index.
 func (m MainModel) GetActiveTab() int {
 	return m.activeTab
 }
 
-// SetStatusMessage sets the status bar message
+// SetStatusMessage sets the status bar message.
 func (m *MainModel) SetStatusMessage(msg string) {
 	m.statusMsg = msg
 }

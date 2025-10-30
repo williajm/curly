@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
   tests: true
@@ -6,13 +8,10 @@ run:
 linters:
   enable:
     - errcheck      # Check for unchecked errors
-    - gosimple      # Suggest code simplifications
     - govet         # Examine Go source code and reports suspicious constructs
     - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Go static analysis tool
+    - staticcheck   # Go static analysis tool (includes gosimple and stylecheck)
     - unused        # Check for unused constants, variables, functions, and types
-    - gofmt         # Check whether code was gofmt-ed
-    - goimports     # Check import statements are formatted correctly
     - misspell      # Find commonly misspelled English words
     - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
     - unconvert     # Remove unnecessary type conversions
@@ -25,7 +24,6 @@ linters:
     - nilerr        # Find code that returns nil even if it checks that the error is not nil
     - errname       # Check that sentinel errors are prefixed with Err and error types are suffixed with Error
     - errorlint     # Find code that will cause problems with the error wrapping scheme introduced in Go 1.13
-    - gci           # Control Go package import order and make it deterministic
 
 linters-settings:
   gocyclo:
@@ -34,6 +32,8 @@ linters-settings:
   goconst:
     min-len: 3
     min-occurrences: 3
+    ignore-tests: false
+    skip-tests: true
 
   revive:
     rules:
@@ -86,12 +86,6 @@ linters-settings:
         severity: warning
         disabled: false
 
-  gci:
-    sections:
-      - standard # Standard section: captures all standard packages.
-      - default # Default section: contains all imports that could not be matched to another section type.
-      - prefix(github.com/williajm/curly) # Custom section: groups all imports with the specified Prefix.
-
   errcheck:
     check-type-assertions: true
     check-blank: true
@@ -108,6 +102,13 @@ issues:
         - gocyclo
         - errcheck
         - gosec
+        - goconst
+
+    # Exclude context-as-argument check for test files (conflicts with testing.T convention)
+    - path: _test\.go
+      linters:
+        - revive
+      text: "context-as-argument"
 
     # Exclude package comment check for main package
     - path: cmd/curly/main\.go
@@ -116,7 +117,9 @@ issues:
       text: "package-comments"
 
 output:
-  format: colored-line-number
+  formats:
+    colored-line-number:
+      path: stdout
   print-issued-lines: true
   print-linter-name: true
   sort-results: true

@@ -8,15 +8,39 @@ import (
 	"github.com/google/uuid"
 )
 
+// HTTP method constants.
+const (
+	// MethodGet represents the HTTP GET method.
+	MethodGet = "GET"
+
+	// MethodPost represents the HTTP POST method.
+	MethodPost = "POST"
+
+	// MethodPut represents the HTTP PUT method.
+	MethodPut = "PUT"
+
+	// MethodPatch represents the HTTP PATCH method.
+	MethodPatch = "PATCH"
+
+	// MethodDelete represents the HTTP DELETE method.
+	MethodDelete = "DELETE"
+
+	// MethodHead represents the HTTP HEAD method.
+	MethodHead = "HEAD"
+
+	// MethodOptions represents the HTTP OPTIONS method.
+	MethodOptions = "OPTIONS"
+)
+
 // SupportedMethods lists all HTTP methods supported by curly.
 var SupportedMethods = []string{
-	"GET",
-	"POST",
-	"PUT",
-	"PATCH",
-	"DELETE",
-	"HEAD",
-	"OPTIONS",
+	MethodGet,
+	MethodPost,
+	MethodPut,
+	MethodPatch,
+	MethodDelete,
+	MethodHead,
+	MethodOptions,
 }
 
 // Request represents an HTTP request configuration.
@@ -63,7 +87,7 @@ func NewRequest() *Request {
 	now := time.Now()
 	return &Request{
 		ID:          uuid.New().String(),
-		Method:      "GET",
+		Method:      MethodGet,
 		Headers:     make(map[string]string),
 		QueryParams: make(map[string]string),
 		AuthConfig:  NewNoAuth(),
@@ -83,27 +107,27 @@ func NewRequestWithMethodAndURL(method, requestURL string) *Request {
 // Validate checks if the request configuration is valid.
 // It validates the method, URL, headers, and authentication.
 func (r *Request) Validate() error {
-	// Validate method
+	// Validate method.
 	if err := r.ValidateMethod(); err != nil {
 		return err
 	}
 
-	// Validate URL
+	// Validate URL.
 	if err := r.ValidateURL(); err != nil {
 		return err
 	}
 
-	// Validate headers
+	// Validate headers.
 	if err := r.ValidateHeaders(); err != nil {
 		return err
 	}
 
-	// Validate query parameters
+	// Validate query parameters.
 	if err := r.ValidateQueryParams(); err != nil {
 		return err
 	}
 
-	// Validate auth config if present
+	// Validate auth config if present.
 	if r.AuthConfig != nil {
 		if err := r.AuthConfig.Validate(); err != nil {
 			return err
@@ -140,12 +164,12 @@ func (r *Request) ValidateURL() error {
 		return ErrInvalidURL
 	}
 
-	// Ensure the URL has a scheme (http or https)
+	// Ensure the URL has a scheme (http or https).
 	if parsed.Scheme != "http" && parsed.Scheme != "https" {
 		return ErrInvalidURL
 	}
 
-	// Ensure the URL has a host
+	// Ensure the URL has a host.
 	if parsed.Host == "" {
 		return ErrInvalidURL
 	}
@@ -160,7 +184,7 @@ func (r *Request) ValidateHeaders() error {
 		if strings.TrimSpace(name) == "" {
 			return ErrInvalidHeaderName
 		}
-		// Basic validation: header names should not contain colons, spaces, or newlines
+		// Basic validation: header names should not contain colons, spaces, or newlines.
 		if strings.ContainsAny(name, ":\n\r") {
 			return ErrInvalidHeaderName
 		}
@@ -226,7 +250,7 @@ func (r *Request) Clone() *Request {
 		QueryParams: make(map[string]string),
 	}
 
-	// Deep copy maps
+	// Deep copy maps.
 	for k, v := range r.Headers {
 		clone.Headers[k] = v
 	}
@@ -241,7 +265,7 @@ func (r *Request) Clone() *Request {
 func (r *Request) IsBodyAllowed() bool {
 	method := strings.ToUpper(r.Method)
 	switch method {
-	case "POST", "PUT", "PATCH":
+	case MethodPost, MethodPut, MethodPatch:
 		return true
 	default:
 		return false

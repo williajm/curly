@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,8 +11,10 @@ import (
 	"github.com/williajm/curly/internal/infrastructure/repository"
 )
 
-// createTestRequest is a helper to create a test request in the database
-func createTestRequest(t *testing.T, repo *RequestRepository, ctx context.Context, id string) *domain.Request {
+// createTestRequest is a helper to create a test request in the database.
+//
+//nolint:revive // context-as-argument: testing.T should be first parameter in test helpers.
+func createTestRequest(t *testing.T, ctx context.Context, repo *RequestRepository, id string) *domain.Request {
 	t.Helper()
 	req := &domain.Request{
 		ID:          id,
@@ -33,14 +36,14 @@ func createTestRequest(t *testing.T, repo *RequestRepository, ctx context.Contex
 
 func TestHistoryRepository_Save(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	ctx := context.Background()
 
-	// Create a test request for foreign key reference
+	// Create a test request for foreign key reference.
 	reqRepo := NewRequestRepository(db)
-	testReq := createTestRequest(t, reqRepo, ctx, "req-123")
+	testReq := createTestRequest(t, ctx, reqRepo, "req-123")
 
 	tests := []struct {
 		name    string
@@ -111,16 +114,16 @@ func TestHistoryRepository_Save(t *testing.T) {
 
 func TestHistoryRepository_FindByID(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	reqRepo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test request for foreign key reference
-	testReq := createTestRequest(t, reqRepo, ctx, "req-123")
+	// Create test request for foreign key reference.
+	testReq := createTestRequest(t, ctx, reqRepo, "req-123")
 
-	// Create test entry
+	// Create test entry.
 	testEntry := &repository.HistoryEntry{
 		ID:              "hist-123",
 		RequestID:       testReq.ID,
@@ -187,18 +190,18 @@ func TestHistoryRepository_FindByID(t *testing.T) {
 
 func TestHistoryRepository_FindAll(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	reqRepo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test requests for foreign key references
-	req1 := createTestRequest(t, reqRepo, ctx, "req-1")
-	req2 := createTestRequest(t, reqRepo, ctx, "req-2")
-	req3 := createTestRequest(t, reqRepo, ctx, "req-3")
+	// Create test requests for foreign key references.
+	req1 := createTestRequest(t, ctx, reqRepo, "req-1")
+	req2 := createTestRequest(t, ctx, reqRepo, "req-2")
+	req3 := createTestRequest(t, ctx, reqRepo, "req-3")
 
-	// Create test entries with different timestamps
+	// Create test entries with different timestamps.
 	baseTime := time.Now()
 	entries := []*repository.HistoryEntry{
 		{
@@ -275,7 +278,7 @@ func TestHistoryRepository_FindAll(t *testing.T) {
 				t.Errorf("FindAll() returned %d entries, want %d", len(got), tt.wantCount)
 			}
 
-			// Verify ordering (newest first)
+			// Verify ordering (newest first).
 			if len(got) >= 2 {
 				if got[0].ID != "hist-3" {
 					t.Errorf("FindAll() first entry ID = %v, want hist-3 (newest)", got[0].ID)
@@ -287,17 +290,17 @@ func TestHistoryRepository_FindAll(t *testing.T) {
 
 func TestHistoryRepository_FindByRequestID(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	reqRepo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test requests for foreign key references
-	reqA := createTestRequest(t, reqRepo, ctx, "req-a")
-	reqB := createTestRequest(t, reqRepo, ctx, "req-b")
+	// Create test requests for foreign key references.
+	reqA := createTestRequest(t, ctx, reqRepo, "req-a")
+	reqB := createTestRequest(t, ctx, reqRepo, "req-b")
 
-	// Create test entries for the same request
+	// Create test entries for the same request.
 	baseTime := time.Now()
 	entries := []*repository.HistoryEntry{
 		{
@@ -400,16 +403,16 @@ func TestHistoryRepository_FindByRequestID(t *testing.T) {
 
 func TestHistoryRepository_Delete(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	reqRepo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test request for foreign key reference
-	testReq := createTestRequest(t, reqRepo, ctx, "req-delete")
+	// Create test request for foreign key reference.
+	testReq := createTestRequest(t, ctx, reqRepo, "req-delete")
 
-	// Create test entry
+	// Create test entry.
 	testEntry := &repository.HistoryEntry{
 		ID:              "hist-delete-1",
 		RequestID:       testReq.ID,
@@ -426,38 +429,38 @@ func TestHistoryRepository_Delete(t *testing.T) {
 		t.Fatalf("failed to save test entry: %v", err)
 	}
 
-	// Delete the entry
+	// Delete the entry.
 	if err := repo.Delete(ctx, "hist-delete-1"); err != nil {
 		t.Fatalf("Delete() error = %v", err)
 	}
 
-	// Verify deletion
+	// Verify deletion.
 	_, err := repo.FindByID(ctx, "hist-delete-1")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("FindByID() after delete error = %v, want ErrNotFound", err)
 	}
 
-	// Test deleting non-existent entry
+	// Test deleting non-existent entry.
 	err = repo.Delete(ctx, "non-existent")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("Delete() with non-existent ID error = %v, want ErrNotFound", err)
 	}
 }
 
 func TestHistoryRepository_DeleteOlderThan(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	reqRepo := NewRequestRepository(db)
 	ctx := context.Background()
 
-	// Create test requests for foreign key references
-	req1 := createTestRequest(t, reqRepo, ctx, "req-old-1")
-	req2 := createTestRequest(t, reqRepo, ctx, "req-old-2")
-	req3 := createTestRequest(t, reqRepo, ctx, "req-old-3")
+	// Create test requests for foreign key references.
+	req1 := createTestRequest(t, ctx, reqRepo, "req-old-1")
+	req2 := createTestRequest(t, ctx, reqRepo, "req-old-2")
+	req3 := createTestRequest(t, ctx, reqRepo, "req-old-3")
 
-	// Create entries with different timestamps
+	// Create entries with different timestamps.
 	now := time.Now()
 	entries := []*repository.HistoryEntry{
 		{
@@ -501,7 +504,7 @@ func TestHistoryRepository_DeleteOlderThan(t *testing.T) {
 		}
 	}
 
-	// Delete entries older than 24 hours
+	// Delete entries older than 24 hours.
 	cutoff := now.Add(-24 * time.Hour).Format(time.RFC3339)
 	deleted, err := repo.DeleteOlderThan(ctx, cutoff)
 	if err != nil {
@@ -512,32 +515,32 @@ func TestHistoryRepository_DeleteOlderThan(t *testing.T) {
 		t.Errorf("DeleteOlderThan() deleted %d entries, want 2", deleted)
 	}
 
-	// Verify the recent entry still exists
+	// Verify the recent entry still exists.
 	_, err = repo.FindByID(ctx, "hist-recent")
 	if err != nil {
 		t.Errorf("FindByID(hist-recent) error = %v, want nil (entry should exist)", err)
 	}
 
-	// Verify old entries are deleted
+	// Verify old entries are deleted.
 	_, err = repo.FindByID(ctx, "hist-old-1")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("FindByID(hist-old-1) error = %v, want ErrNotFound", err)
 	}
 
 	_, err = repo.FindByID(ctx, "hist-old-2")
-	if err != ErrNotFound {
+	if !errors.Is(err, ErrNotFound) {
 		t.Errorf("FindByID(hist-old-2) error = %v, want ErrNotFound", err)
 	}
 }
 
 func TestHistoryRepository_NullHandling(t *testing.T) {
 	db := setupTestDB(t)
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	repo := NewHistoryRepository(db)
 	ctx := context.Background()
 
-	// Create entry with NULL request_id and error
+	// Create entry with NULL request_id and error.
 	entryWithNulls := &repository.HistoryEntry{
 		ID:              "hist-nulls",
 		RequestID:       "", // Will be NULL in database
@@ -554,7 +557,7 @@ func TestHistoryRepository_NullHandling(t *testing.T) {
 		t.Fatalf("Save() with nulls error = %v", err)
 	}
 
-	// Retrieve and verify NULL fields are handled correctly
+	// Retrieve and verify NULL fields are handled correctly.
 	got, err := repo.FindByID(ctx, "hist-nulls")
 	if err != nil {
 		t.Fatalf("FindByID() error = %v", err)

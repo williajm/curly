@@ -11,13 +11,13 @@ import (
 )
 
 func TestLoad_Defaults(t *testing.T) {
-	// Load config with no file (should use defaults)
-	// Pass empty string to use default config search paths
+	// Load config with no file (should use defaults).
+	// Pass empty string to use default config search paths.
 	cfg, err := Load("")
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Verify defaults
+	// Verify defaults.
 	assert.Equal(t, 30*time.Second, cfg.HTTP.Timeout)
 	assert.Equal(t, 10, cfg.HTTP.MaxRedirects)
 	assert.True(t, cfg.HTTP.FollowRedirects)
@@ -37,7 +37,7 @@ func TestLoad_Defaults(t *testing.T) {
 }
 
 func TestLoad_CustomConfigFile(t *testing.T) {
-	// Create temporary config file
+	// Create temporary config file.
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "config.yaml")
 
@@ -68,15 +68,15 @@ logging:
   level: debug
 `
 
-	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
 	require.NoError(t, err)
 
-	// Load config from file
+	// Load config from file.
 	cfg, err := Load(configFile)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Verify custom values
+	// Verify custom values.
 	assert.Equal(t, "/tmp/test.db", cfg.Database.Path)
 	assert.Equal(t, 60*time.Second, cfg.HTTP.Timeout)
 	assert.Equal(t, 5, cfg.HTTP.MaxRedirects)
@@ -133,9 +133,9 @@ func TestExpandPath(t *testing.T) {
 }
 
 func TestExpandPath_EnvVar(t *testing.T) {
-	// Set test environment variable
-	os.Setenv("TEST_VAR", "/test/value")
-	defer os.Unsetenv("TEST_VAR")
+	// Set test environment variable.
+	_ = os.Setenv("TEST_VAR", "/test/value")
+	defer func() { _ = os.Unsetenv("TEST_VAR") }()
 
 	result, err := expandPath("$TEST_VAR/path")
 	require.NoError(t, err)
@@ -158,7 +158,7 @@ func TestEnsureDirectories(t *testing.T) {
 	err := EnsureDirectories(cfg)
 	require.NoError(t, err)
 
-	// Verify directories were created
+	// Verify directories were created.
 	dbDir := filepath.Dir(cfg.Database.Path)
 	logDir := filepath.Dir(cfg.Logging.Path)
 
@@ -167,25 +167,25 @@ func TestEnsureDirectories(t *testing.T) {
 }
 
 func TestGetConfigDir(t *testing.T) {
-	// Save original env var
+	// Save original env var.
 	originalXDG := os.Getenv("XDG_CONFIG_HOME")
 	defer func() {
 		if originalXDG != "" {
-			os.Setenv("XDG_CONFIG_HOME", originalXDG)
+			_ = os.Setenv("XDG_CONFIG_HOME", originalXDG)
 		} else {
-			os.Unsetenv("XDG_CONFIG_HOME")
+			_ = os.Unsetenv("XDG_CONFIG_HOME")
 		}
 	}()
 
 	t.Run("with XDG_CONFIG_HOME", func(t *testing.T) {
-		os.Setenv("XDG_CONFIG_HOME", "/custom/config")
+		_ = os.Setenv("XDG_CONFIG_HOME", "/custom/config")
 		configDir, err := getConfigDir()
 		require.NoError(t, err)
 		assert.Equal(t, "/custom/config/curly", configDir)
 	})
 
 	t.Run("without XDG_CONFIG_HOME", func(t *testing.T) {
-		os.Unsetenv("XDG_CONFIG_HOME")
+		_ = os.Unsetenv("XDG_CONFIG_HOME")
 		homeDir, _ := os.UserHomeDir()
 		configDir, err := getConfigDir()
 		require.NoError(t, err)
@@ -194,7 +194,7 @@ func TestGetConfigDir(t *testing.T) {
 }
 
 func TestLoad_InvalidYAML(t *testing.T) {
-	// Create temporary config file with invalid YAML
+	// Create temporary config file with invalid YAML.
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "config.yaml")
 
@@ -206,10 +206,10 @@ database:
 	tabs: are bad
 `
 
-	err := os.WriteFile(configFile, []byte(invalidYAML), 0644)
+	err := os.WriteFile(configFile, []byte(invalidYAML), 0600)
 	require.NoError(t, err)
 
-	// Load config should fail
+	// Load config should fail.
 	_, err = Load(configFile)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read config file")
@@ -231,15 +231,15 @@ func TestEnsureDirectories_LoggingDisabled(t *testing.T) {
 	err := EnsureDirectories(cfg)
 	require.NoError(t, err)
 
-	// Verify database directory was created
+	// Verify database directory was created.
 	dbDir := filepath.Dir(cfg.Database.Path)
 	assert.DirExists(t, dbDir)
 
-	// Log directory may or may not exist - that's OK when logging is disabled
+	// Log directory may or may not exist - that's OK when logging is disabled.
 }
 
 func TestExpandPaths_Error(t *testing.T) {
-	// Test error handling in expandPaths
+	// Test error handling in expandPaths.
 	cfg := &Config{
 		Database: DatabaseConfig{
 			Path: "~/valid/path",
@@ -249,13 +249,13 @@ func TestExpandPaths_Error(t *testing.T) {
 		},
 	}
 
-	// This should succeed normally
+	// This should succeed normally.
 	err := expandPaths(cfg)
 	assert.NoError(t, err)
 }
 
 func TestLoad_PartialConfig(t *testing.T) {
-	// Create config file with only some values
+	// Create config file with only some values.
 	tmpDir := t.TempDir()
 	configFile := filepath.Join(tmpDir, "config.yaml")
 
@@ -267,37 +267,37 @@ ui:
   theme: light
 `
 
-	err := os.WriteFile(configFile, []byte(configContent), 0644)
+	err := os.WriteFile(configFile, []byte(configContent), 0600)
 	require.NoError(t, err)
 
 	cfg, err := Load(configFile)
 	require.NoError(t, err)
 	require.NotNil(t, cfg)
 
-	// Verify custom values are set
+	// Verify custom values are set.
 	assert.Equal(t, 120*time.Second, cfg.HTTP.Timeout)
 	assert.Equal(t, "light", cfg.UI.Theme)
 
-	// Verify defaults are used for unspecified values
+	// Verify defaults are used for unspecified values.
 	assert.Equal(t, 10, cfg.HTTP.MaxRedirects)
 	assert.True(t, cfg.HTTP.FollowRedirects)
 	assert.Equal(t, 1000, cfg.History.MaxEntries)
 }
 
 func TestExpandPath_Relative(t *testing.T) {
-	// Test relative path (should be left as-is)
+	// Test relative path (should be left as-is).
 	result, err := expandPath("relative/path")
 	require.NoError(t, err)
 	assert.Equal(t, "relative/path", result)
 }
 
 func TestExpandPath_MultipleEnvVars(t *testing.T) {
-	// Set test environment variables
-	os.Setenv("TEST_VAR1", "/first")
-	os.Setenv("TEST_VAR2", "second")
+	// Set test environment variables.
+	_ = os.Setenv("TEST_VAR1", "/first")
+	_ = os.Setenv("TEST_VAR2", "second")
 	defer func() {
-		os.Unsetenv("TEST_VAR1")
-		os.Unsetenv("TEST_VAR2")
+		_ = os.Unsetenv("TEST_VAR1")
+		_ = os.Unsetenv("TEST_VAR2")
 	}()
 
 	result, err := expandPath("$TEST_VAR1/$TEST_VAR2/path")
@@ -321,7 +321,7 @@ func TestEnsureDirectories_NestedPaths(t *testing.T) {
 	err := EnsureDirectories(cfg)
 	require.NoError(t, err)
 
-	// Verify nested directories were created
+	// Verify nested directories were created.
 	dbDir := filepath.Dir(cfg.Database.Path)
 	logDir := filepath.Dir(cfg.Logging.Path)
 

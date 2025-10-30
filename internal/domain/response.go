@@ -73,7 +73,7 @@ func (r *Response) IsInformational() bool {
 }
 
 // StatusClass returns a string representing the class of the status code.
-// Returns one of: "1xx Informational", "2xx Success", "3xx Redirect",
+// Returns one of: "1xx Informational", "2xx Success", "3xx Redirect",.
 // "4xx Client Error", "5xx Server Error", or "Unknown".
 func (r *Response) StatusClass() string {
 	switch {
@@ -95,12 +95,12 @@ func (r *Response) StatusClass() string {
 // GetHeader returns the value of a response header.
 // Header names are case-insensitive. Returns empty string if not found.
 func (r *Response) GetHeader(name string) string {
-	// Try exact match first
+	// Try exact match first.
 	if value, ok := r.Headers[name]; ok {
 		return value
 	}
 
-	// Try case-insensitive match
+	// Try case-insensitive match.
 	for key, value := range r.Headers {
 		if equalsFold(key, name) {
 			return value
@@ -155,7 +155,7 @@ func (r *Response) DurationSeconds() float64 {
 	return r.Duration.Seconds()
 }
 
-// Helper functions
+// Helper functions.
 
 // equalsFold compares two strings case-insensitively.
 func equalsFold(a, b string) bool {
@@ -165,7 +165,7 @@ func equalsFold(a, b string) bool {
 	for i := 0; i < len(a); i++ {
 		ca := a[i]
 		cb := b[i]
-		// Convert to lowercase
+		// Convert to lowercase.
 		if ca >= 'A' && ca <= 'Z' {
 			ca += 'a' - 'A'
 		}
@@ -181,7 +181,7 @@ func equalsFold(a, b string) bool {
 
 // contains checks if substr is contained in s (case-insensitive).
 func contains(s, substr string) bool {
-	// Simple case-insensitive contains check
+	// Simple case-insensitive contains check.
 	if len(substr) == 0 {
 		return true
 	}
@@ -189,7 +189,7 @@ func contains(s, substr string) bool {
 		return false
 	}
 
-	// Convert both strings to lowercase for comparison
+	// Convert both strings to lowercase for comparison.
 	sLower := make([]byte, len(s))
 	substrLower := make([]byte, len(substr))
 
@@ -209,7 +209,7 @@ func contains(s, substr string) bool {
 		substrLower[i] = c
 	}
 
-	// Search for substring
+	// Search for substring.
 	for i := 0; i <= len(sLower)-len(substrLower); i++ {
 		match := true
 		for j := 0; j < len(substrLower); j++ {
