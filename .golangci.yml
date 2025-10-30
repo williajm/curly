@@ -1,0 +1,130 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - govet         # Examine Go source code and reports suspicious constructs
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis tool (includes gosimple and stylecheck)
+    - unused        # Check for unused constants, variables, functions, and types
+    - misspell      # Find commonly misspelled English words
+    - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Report unused function parameters
+    - gocyclo       # Compute cyclomatic complexity
+    - goconst       # Find repeated strings that could be replaced by a constant
+    - godot         # Check if comments end in a period
+    - gosec         # Inspect source code for security problems
+    - bodyclose     # Check whether HTTP response body is closed successfully
+    - nilerr        # Find code that returns nil even if it checks that the error is not nil
+    - errname       # Check that sentinel errors are prefixed with Err and error types are suffixed with Error
+    - errorlint     # Find code that will cause problems with the error wrapping scheme introduced in Go 1.13
+
+  settings:
+    gocyclo:
+      min-complexity: 15
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    revive:
+      rules:
+        - name: exported
+          severity: warning
+          disabled: false
+        - name: unexported-return
+          severity: warning
+          disabled: false
+        - name: blank-imports
+          severity: warning
+          disabled: false
+        - name: context-as-argument
+          severity: warning
+          disabled: false
+        - name: dot-imports
+          severity: warning
+          disabled: false
+        - name: error-return
+          severity: warning
+          disabled: false
+        - name: error-strings
+          severity: warning
+          disabled: false
+        - name: error-naming
+          severity: warning
+          disabled: false
+        - name: if-return
+          severity: warning
+          disabled: false
+        - name: increment-decrement
+          severity: warning
+          disabled: false
+        - name: var-naming
+          severity: warning
+          disabled: false
+        - name: package-comments
+          severity: warning
+          disabled: false
+        - name: range
+          severity: warning
+          disabled: false
+        - name: receiver-naming
+          severity: warning
+          disabled: false
+        - name: indent-error-flow
+          severity: warning
+          disabled: false
+        - name: superfluous-else
+          severity: warning
+          disabled: false
+
+    errcheck:
+      check-type-assertions: true
+
+  exclusions:
+    rules:
+      # Exclude some linters from running on tests files
+      - path: "_test\\.go"
+        linters:
+          - gocyclo
+          - errcheck
+          - gosec
+          - goconst
+
+      # Exclude context-as-argument check for test files (conflicts with testing.T convention)
+      - path: "_test\\.go"
+        linters:
+          - revive
+        text: "context-as-argument"
+
+      # Exclude package comment check for main package
+      - path: "cmd/curly/main\\.go"
+        linters:
+          - revive
+        text: "package-comments"
+
+      # Exclude gocyclo from Bubble Tea models (Update methods naturally have high complexity)
+      - path: "internal/presentation/models/.*\\.go"
+        linters:
+          - gocyclo
+
+      # Exclude gocyclo from auth service (CreateAuth switch statement has complexity 16)
+      - path: "internal/app/auth_service\\.go"
+        linters:
+          - gocyclo
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  formats:
+    text:
+      path: stdout
+  sort-order: [linter, file]
