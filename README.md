@@ -1,5 +1,10 @@
 # Curly
 
+[![CI](https://github.com/williajm/curly/actions/workflows/ci.yml/badge.svg)](https://github.com/williajm/curly/actions/workflows/ci.yml)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/williajm/curly)](https://github.com/williajm/curly)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go Report Card](https://goreportcard.com/badge/github.com/williajm/curly)](https://goreportcard.com/report/github.com/williajm/curly)
+
 A modern, terminal-based API client built with Go. Curly provides a fast, keyboard-driven workflow for constructing, executing, and managing HTTP requests - like Postman, but for the terminal.
 
 ## Features
