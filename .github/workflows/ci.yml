@@ -138,3 +138,21 @@ jobs:
         with:
           sarif_file: results.sarif
         continue-on-error: true
+
+  goreportcard:
+    name: Refresh Go Report Card
+    runs-on: ubuntu-latest
+    # Only run on push to main (not on PRs)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Wait for all quality checks to pass before refreshing
+    needs: [lint, format, test, build]
+    steps:
+      - name: Trigger Go Report Card refresh
+        run: |
+          curl -X POST https://goreportcard.com/checks \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "repo=github.com/${{ github.repository }}" \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5
+          echo "Go Report Card refresh triggered for ${{ github.repository }}"
