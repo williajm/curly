@@ -59,72 +59,90 @@ func (m HistoryModel) Update(msg tea.Msg) (HistoryModel, tea.Cmd) {
 		if m.loading {
 			return m, nil
 		}
-
-		switch msg.String() {
-		case KeyCtrlC:
-			return m, tea.Quit
-
-		case "up", "k":
-			if m.selectedIndex > 0 {
-				m.selectedIndex--
-			}
-
-		case "down", "j":
-			if m.selectedIndex < len(m.entries)-1 {
-				m.selectedIndex++
-			}
-
-		case "enter":
-			// Load selected history entry into request builder.
-			// This will be handled by the main model.
-			return m, nil
-
-		case "delete", "d":
-			// Delete selected history entry.
-			if len(m.entries) > 0 {
-				return m, m.deleteEntry(m.entries[m.selectedIndex].ID)
-			}
-
-		case "r":
-			// Refresh history.
-			return m, m.loadHistory()
-
-		case "home", "g":
-			m.selectedIndex = 0
-
-		case "end", "G":
-			if len(m.entries) > 0 {
-				m.selectedIndex = len(m.entries) - 1
-			}
-		}
+		return m.handleKeyMsg(msg)
 
 	case historyLoadedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.errorMsg = msg.err.Error()
-		} else {
-			m.entries = msg.entries
-			m.errorMsg = ""
-			// Ensure selected index is valid.
-			if m.selectedIndex >= len(m.entries) {
-				m.selectedIndex = max(0, len(m.entries)-1)
-			}
-		}
+		return m.handleHistoryLoadedMsg(msg)
 
 	case historyDeletedMsg:
-		m.loading = false
-		if msg.err != nil {
-			m.errorMsg = msg.err.Error()
-		} else {
-			// Reload history after deletion.
-			return m, m.loadHistory()
-		}
+		return m.handleHistoryDeletedMsg(msg)
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 	}
 
+	return m, nil
+}
+
+// handleKeyMsg handles keyboard input for history navigation.
+func (m HistoryModel) handleKeyMsg(msg tea.KeyMsg) (HistoryModel, tea.Cmd) {
+	switch msg.String() {
+	case KeyCtrlC:
+		return m, tea.Quit
+
+	case "up", "k":
+		if m.selectedIndex > 0 {
+			m.selectedIndex--
+		}
+
+	case "down", "j":
+		if m.selectedIndex < len(m.entries)-1 {
+			m.selectedIndex++
+		}
+
+	case "enter":
+		// Load selected history entry into request builder.
+		// This will be handled by the main model.
+		return m, nil
+
+	case "delete", "d":
+		// Delete selected history entry.
+		if len(m.entries) > 0 {
+			return m, m.deleteEntry(m.entries[m.selectedIndex].ID)
+		}
+
+	case "r":
+		// Refresh history.
+		return m, m.loadHistory()
+
+	case "home", "g":
+		m.selectedIndex = 0
+
+	case "end", "G":
+		if len(m.entries) > 0 {
+			m.selectedIndex = len(m.entries) - 1
+		}
+	}
+
+	return m, nil
+}
+
+// handleHistoryLoadedMsg handles the history loaded message.
+func (m HistoryModel) handleHistoryLoadedMsg(msg historyLoadedMsg) (HistoryModel, tea.Cmd) {
+	m.loading = false
+	if msg.err != nil {
+		m.errorMsg = msg.err.Error()
+	} else {
+		m.entries = msg.entries
+		m.errorMsg = ""
+		// Ensure selected index is valid.
+		if m.selectedIndex >= len(m.entries) {
+			m.selectedIndex = max(0, len(m.entries)-1)
+		}
+	}
+	return m, nil
+}
+
+// handleHistoryDeletedMsg handles the history deleted message.
+func (m HistoryModel) handleHistoryDeletedMsg(msg historyDeletedMsg) (HistoryModel, tea.Cmd) {
+	m.loading = false
+	if msg.err != nil {
+		m.errorMsg = msg.err.Error()
+	} else {
+		// Reload history after deletion.
+		return m, m.loadHistory()
+	}
 	return m, nil
 }
 

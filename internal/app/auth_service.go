@@ -39,73 +39,95 @@ func (s *AuthService) CreateAuth(authType string, credentials map[string]string)
 		return domain.NewNoAuth(), nil
 
 	case "basic":
-		username, hasUsername := credentials["username"]
-		password, hasPassword := credentials["password"]
-
-		if !hasUsername || !hasPassword {
-			return nil, fmt.Errorf("basic auth requires 'username' and 'password' credentials")
-		}
-
-		auth := domain.NewBasicAuth(username, password)
-		if err := auth.Validate(); err != nil {
-			s.logger.Warn("basic auth validation failed", "error", err)
-			return nil, fmt.Errorf("invalid basic auth credentials: %w", err)
-		}
-
-		s.logger.Debug("basic auth created successfully", "username", username)
-		return auth, nil
+		return s.createBasicAuth(credentials)
 
 	case "bearer":
-		token, hasToken := credentials["token"]
-
-		if !hasToken {
-			return nil, fmt.Errorf("bearer auth requires 'token' credential")
-		}
-
-		auth := domain.NewBearerAuth(token)
-		if err := auth.Validate(); err != nil {
-			s.logger.Warn("bearer auth validation failed", "error", err)
-			return nil, fmt.Errorf("invalid bearer token: %w", err)
-		}
-
-		s.logger.Debug("bearer auth created successfully")
-		return auth, nil
+		return s.createBearerAuth(credentials)
 
 	case "apikey":
-		key, hasKey := credentials["key"]
-		value, hasValue := credentials["value"]
-		location, hasLocation := credentials["location"]
-
-		if !hasKey || !hasValue || !hasLocation {
-			return nil, fmt.Errorf("api key auth requires 'key', 'value', and 'location' credentials")
-		}
-
-		// Parse location.
-		var apiKeyLocation domain.APIKeyLocation
-		switch strings.ToLower(location) {
-		case "header":
-			apiKeyLocation = domain.APIKeyLocationHeader
-		case "query":
-			apiKeyLocation = domain.APIKeyLocationQuery
-		default:
-			return nil, fmt.Errorf("invalid api key location: %s (must be 'header' or 'query')", location)
-		}
-
-		auth := domain.NewAPIKeyAuth(key, value, apiKeyLocation)
-		if err := auth.Validate(); err != nil {
-			s.logger.Warn("api key auth validation failed", "error", err)
-			return nil, fmt.Errorf("invalid api key credentials: %w", err)
-		}
-
-		s.logger.Debug("api key auth created successfully",
-			"key", key,
-			"location", location,
-		)
-		return auth, nil
+		return s.createAPIKeyAuth(credentials)
 
 	default:
 		s.logger.Warn("unsupported auth type", "type", authType)
 		return nil, fmt.Errorf("unsupported auth type: %s", authType)
+	}
+}
+
+// createBasicAuth creates and validates a basic authentication configuration.
+func (s *AuthService) createBasicAuth(credentials map[string]string) (domain.AuthConfig, error) {
+	username, hasUsername := credentials["username"]
+	password, hasPassword := credentials["password"]
+
+	if !hasUsername || !hasPassword {
+		return nil, fmt.Errorf("basic auth requires 'username' and 'password' credentials")
+	}
+
+	auth := domain.NewBasicAuth(username, password)
+	if err := auth.Validate(); err != nil {
+		s.logger.Warn("basic auth validation failed", "error", err)
+		return nil, fmt.Errorf("invalid basic auth credentials: %w", err)
+	}
+
+	s.logger.Debug("basic auth created successfully", "username", username)
+	return auth, nil
+}
+
+// createBearerAuth creates and validates a bearer token authentication configuration.
+func (s *AuthService) createBearerAuth(credentials map[string]string) (domain.AuthConfig, error) {
+	token, hasToken := credentials["token"]
+
+	if !hasToken {
+		return nil, fmt.Errorf("bearer auth requires 'token' credential")
+	}
+
+	auth := domain.NewBearerAuth(token)
+	if err := auth.Validate(); err != nil {
+		s.logger.Warn("bearer auth validation failed", "error", err)
+		return nil, fmt.Errorf("invalid bearer token: %w", err)
+	}
+
+	s.logger.Debug("bearer auth created successfully")
+	return auth, nil
+}
+
+// createAPIKeyAuth creates and validates an API key authentication configuration.
+func (s *AuthService) createAPIKeyAuth(credentials map[string]string) (domain.AuthConfig, error) {
+	key, hasKey := credentials["key"]
+	value, hasValue := credentials["value"]
+	location, hasLocation := credentials["location"]
+
+	if !hasKey || !hasValue || !hasLocation {
+		return nil, fmt.Errorf("api key auth requires 'key', 'value', and 'location' credentials")
+	}
+
+	// Parse location.
+	apiKeyLocation, err := s.parseAPIKeyLocation(location)
+	if err != nil {
+		return nil, err
+	}
+
+	auth := domain.NewAPIKeyAuth(key, value, apiKeyLocation)
+	if err := auth.Validate(); err != nil {
+		s.logger.Warn("api key auth validation failed", "error", err)
+		return nil, fmt.Errorf("invalid api key credentials: %w", err)
+	}
+
+	s.logger.Debug("api key auth created successfully",
+		"key", key,
+		"location", location,
+	)
+	return auth, nil
+}
+
+// parseAPIKeyLocation parses the API key location string.
+func (s *AuthService) parseAPIKeyLocation(location string) (domain.APIKeyLocation, error) {
+	switch strings.ToLower(location) {
+	case "header":
+		return domain.APIKeyLocationHeader, nil
+	case "query":
+		return domain.APIKeyLocationQuery, nil
+	default:
+		return "", fmt.Errorf("invalid api key location: %s (must be 'header' or 'query')", location)
 	}
 }
 

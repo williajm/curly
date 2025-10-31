@@ -115,83 +115,14 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Handle global keys first (before field-specific handling).
-		switch msg.String() {
-		case KeyCtrlC:
-			return m, tea.Quit
-
-		case "ctrl+enter", "ctrl+r":
-			// Send request - handle before field-specific keys.
-			if !m.loading {
-				return m, m.sendRequest()
-			}
-			return m, nil
-
-		case "tab":
-			// Move focus to next field.
-			m.focusedField = (m.focusedField + 1) % fieldCount
-			m.updateFocus()
-			return m, nil
-
-		case "shift+tab":
-			// Move focus to previous field.
-			m.focusedField = (m.focusedField - 1 + fieldCount) % fieldCount
-			m.updateFocus()
-			return m, nil
+		// Try to handle global keys first.
+		if handled, cmd := m.handleGlobalKey(msg); handled {
+			return m, cmd
 		}
 
 		// Handle field-specific keys.
-		switch m.focusedField {
-		case fieldMethod:
-			switch msg.String() {
-			case "left", "h":
-				if m.methodIndex > 0 {
-					m.methodIndex--
-				}
-			case "right", "l":
-				if m.methodIndex < len(domain.SupportedMethods)-1 {
-					m.methodIndex++
-				}
-			}
-
-		case fieldURL:
-			var cmd tea.Cmd
-			m.urlInput, cmd = m.urlInput.Update(msg)
-			cmds = append(cmds, cmd)
-
-		case fieldName:
-			var cmd tea.Cmd
-			m.nameInput, cmd = m.nameInput.Update(msg)
-			cmds = append(cmds, cmd)
-
-		case fieldBody:
-			// Don't pass ctrl+enter/ctrl+r to textarea (handled globally above).
-			if msg.String() != "ctrl+enter" && msg.String() != "ctrl+r" {
-				var cmd tea.Cmd
-				m.bodyTextArea, cmd = m.bodyTextArea.Update(msg)
-				cmds = append(cmds, cmd)
-			}
-
-		case fieldAuthType:
-			// Simple auth type selector (NoAuth, Basic, Bearer, APIKey).
-			switch msg.String() {
-			case "left", "h":
-				if m.authTypeIndex > 0 {
-					m.authTypeIndex--
-				}
-			case "right", "l":
-				if m.authTypeIndex < 3 { // 4 auth types: NoAuth, Basic, Bearer, APIKey
-					m.authTypeIndex++
-				}
-			}
-
-		case fieldSend:
-			if msg.String() == "enter" || msg.String() == " " {
-				if !m.loading {
-					return m, m.sendRequest()
-				}
-			}
-		}
+		cmd := m.handleFieldKey(msg)
+		cmds = append(cmds, cmd)
 
 	case requestSentMsg:
 		m.loading = false
@@ -213,6 +144,121 @@ func (m RequestModel) Update(msg tea.Msg) (RequestModel, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+// handleGlobalKey handles global keyboard shortcuts.
+// Returns true if the key was handled (and further processing should stop).
+func (m *RequestModel) handleGlobalKey(msg tea.KeyMsg) (bool, tea.Cmd) {
+	switch msg.String() {
+	case KeyCtrlC:
+		return true, tea.Quit
+
+	case "ctrl+enter", "ctrl+r":
+		// Send request - handle before field-specific keys.
+		if !m.loading {
+			return true, m.sendRequest()
+		}
+		return true, nil
+
+	case "tab":
+		// Move focus to next field.
+		m.focusedField = (m.focusedField + 1) % fieldCount
+		m.updateFocus()
+		return true, nil
+
+	case "shift+tab":
+		// Move focus to previous field.
+		m.focusedField = (m.focusedField - 1 + fieldCount) % fieldCount
+		m.updateFocus()
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// handleFieldKey handles field-specific keyboard input.
+func (m *RequestModel) handleFieldKey(msg tea.KeyMsg) tea.Cmd {
+	switch m.focusedField {
+	case fieldMethod:
+		return m.handleMethodField(msg)
+	case fieldURL:
+		return m.handleURLField(msg)
+	case fieldName:
+		return m.handleNameField(msg)
+	case fieldBody:
+		return m.handleBodyField(msg)
+	case fieldAuthType:
+		return m.handleAuthTypeField(msg)
+	case fieldSend:
+		return m.handleSendButton(msg)
+	}
+	return nil
+}
+
+// handleMethodField handles keyboard input for the method selector.
+func (m *RequestModel) handleMethodField(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "left", "h":
+		if m.methodIndex > 0 {
+			m.methodIndex--
+		}
+	case "right", "l":
+		if m.methodIndex < len(domain.SupportedMethods)-1 {
+			m.methodIndex++
+		}
+	}
+	return nil
+}
+
+// handleURLField handles keyboard input for the URL field.
+func (m *RequestModel) handleURLField(msg tea.KeyMsg) tea.Cmd {
+	var cmd tea.Cmd
+	m.urlInput, cmd = m.urlInput.Update(msg)
+	return cmd
+}
+
+// handleNameField handles keyboard input for the name field.
+func (m *RequestModel) handleNameField(msg tea.KeyMsg) tea.Cmd {
+	var cmd tea.Cmd
+	m.nameInput, cmd = m.nameInput.Update(msg)
+	return cmd
+}
+
+// handleBodyField handles keyboard input for the body field.
+func (m *RequestModel) handleBodyField(msg tea.KeyMsg) tea.Cmd {
+	// Don't pass ctrl+enter/ctrl+r to textarea (handled globally above).
+	if msg.String() == "ctrl+enter" || msg.String() == "ctrl+r" {
+		return nil
+	}
+
+	var cmd tea.Cmd
+	m.bodyTextArea, cmd = m.bodyTextArea.Update(msg)
+	return cmd
+}
+
+// handleAuthTypeField handles keyboard input for the auth type selector.
+func (m *RequestModel) handleAuthTypeField(msg tea.KeyMsg) tea.Cmd {
+	switch msg.String() {
+	case "left", "h":
+		if m.authTypeIndex > 0 {
+			m.authTypeIndex--
+		}
+	case "right", "l":
+		if m.authTypeIndex < 3 { // 4 auth types: NoAuth, Basic, Bearer, APIKey
+			m.authTypeIndex++
+		}
+	}
+	return nil
+}
+
+// handleSendButton handles keyboard input for the send button.
+func (m *RequestModel) handleSendButton(msg tea.KeyMsg) tea.Cmd {
+	if msg.String() == "enter" || msg.String() == " " {
+		if !m.loading {
+			return m.sendRequest()
+		}
+	}
+	return nil
 }
 
 // View renders the request builder form.
