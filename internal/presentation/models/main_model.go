@@ -75,60 +75,9 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Handle global keys.
-		switch msg.String() {
-		case KeyCtrlC, "q":
-			if !m.showHelp {
-				m.quitting = true
-				return m, tea.Quit
-			}
-
-		case "?":
-			// Toggle help screen.
-			m.showHelp = !m.showHelp
-			return m, nil
-
-		case "esc":
-			// Close help screen.
-			if m.showHelp {
-				m.showHelp = false
-				return m, nil
-			}
-
-		case "tab":
-			// Switch to next tab (but not if help is showing).
-			if !m.showHelp {
-				m.activeTab = (m.activeTab + 1) % len(m.tabs)
-				return m, nil
-			}
-
-		case "shift+tab":
-			// Switch to previous tab.
-			if !m.showHelp {
-				m.activeTab = (m.activeTab - 1 + len(m.tabs)) % len(m.tabs)
-				return m, nil
-			}
-
-		case "1":
-			// Jump to Request tab.
-			if !m.showHelp {
-				m.activeTab = TabRequest
-				return m, nil
-			}
-
-		case "2":
-			// Jump to Response tab.
-			if !m.showHelp {
-				m.activeTab = TabResponse
-				return m, nil
-			}
-
-		case "3":
-			// Jump to History tab.
-			if !m.showHelp {
-				m.activeTab = TabHistory
-				return m, nil
-			}
+		// Handle global keyboard shortcuts.
+		if handled, cmd := m.handleGlobalKey(msg); handled {
+			return m, cmd
 		}
 
 	case tea.WindowSizeMsg:
@@ -136,22 +85,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case requestSentMsg:
-		// When a request is sent, update both request and response models.
-		var cmd tea.Cmd
-		m.requestModel, cmd = m.requestModel.Update(msg)
-		cmds = append(cmds, cmd)
-
-		// Also update response model with the new response.
-		if msg.response != nil {
-			m.responseModel.SetResponse(msg.response)
-			// Switch to response tab to show the result.
-			m.activeTab = TabResponse
-			m.statusMsg = "Request completed successfully"
-		} else if msg.err != nil {
-			m.statusMsg = "Request failed"
-		}
-
-		return m, tea.Batch(cmds...)
+		return m.handleRequestSentMsg(msg)
 
 	case historyLoadedMsg, historyDeletedMsg:
 		// Pass history messages to history model.
@@ -166,22 +100,107 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// Delegate to active sub-model.
+	cmd := m.delegateToActiveTab(msg)
+	cmds = append(cmds, cmd)
+
+	return m, tea.Batch(cmds...)
+}
+
+// handleGlobalKey handles global keyboard shortcuts.
+// Returns true if the key was handled (and further processing should stop).
+func (m *MainModel) handleGlobalKey(msg tea.KeyMsg) (bool, tea.Cmd) {
+	key := msg.String()
+
+	// Handle quit keys.
+	if (key == KeyCtrlC || key == "q") && !m.showHelp {
+		m.quitting = true
+		return true, tea.Quit
+	}
+
+	// Handle help toggle.
+	if key == "?" {
+		m.showHelp = !m.showHelp
+		return true, nil
+	}
+
+	// Handle escape (close help).
+	if key == "esc" && m.showHelp {
+		m.showHelp = false
+		return true, nil
+	}
+
+	// Handle tab navigation when help is not showing.
+	if !m.showHelp {
+		return m.handleTabNavigation(key)
+	}
+
+	return false, nil
+}
+
+// handleTabNavigation handles tab switching keyboard shortcuts.
+// Returns true if a tab navigation key was handled.
+func (m *MainModel) handleTabNavigation(key string) (bool, tea.Cmd) {
+	switch key {
+	case "tab":
+		m.activeTab = (m.activeTab + 1) % len(m.tabs)
+		return true, nil
+
+	case "shift+tab":
+		m.activeTab = (m.activeTab - 1 + len(m.tabs)) % len(m.tabs)
+		return true, nil
+
+	case "1":
+		m.activeTab = TabRequest
+		return true, nil
+
+	case "2":
+		m.activeTab = TabResponse
+		return true, nil
+
+	case "3":
+		m.activeTab = TabHistory
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// handleRequestSentMsg handles the request completion message.
+func (m *MainModel) handleRequestSentMsg(msg requestSentMsg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+
+	// Update request model with the message.
 	var cmd tea.Cmd
-	switch m.activeTab {
-	case TabRequest:
-		m.requestModel, cmd = m.requestModel.Update(msg)
-		cmds = append(cmds, cmd)
+	m.requestModel, cmd = m.requestModel.Update(msg)
+	cmds = append(cmds, cmd)
 
-	case TabResponse:
-		m.responseModel, cmd = m.responseModel.Update(msg)
-		cmds = append(cmds, cmd)
-
-	case TabHistory:
-		m.historyModel, cmd = m.historyModel.Update(msg)
-		cmds = append(cmds, cmd)
+	// Also update response model with the new response.
+	if msg.response != nil {
+		m.responseModel.SetResponse(msg.response)
+		// Switch to response tab to show the result.
+		m.activeTab = TabResponse
+		m.statusMsg = "Request completed successfully"
+	} else if msg.err != nil {
+		m.statusMsg = "Request failed"
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+// delegateToActiveTab delegates messages to the currently active tab's model.
+func (m *MainModel) delegateToActiveTab(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+
+	switch m.activeTab {
+	case TabRequest:
+		m.requestModel, cmd = m.requestModel.Update(msg)
+	case TabResponse:
+		m.responseModel, cmd = m.responseModel.Update(msg)
+	case TabHistory:
+		m.historyModel, cmd = m.historyModel.Update(msg)
+	}
+
+	return cmd
 }
 
 // View renders the main view with tabs.

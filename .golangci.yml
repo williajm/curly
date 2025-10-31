@@ -92,7 +92,6 @@ linters:
       # Exclude some linters from running on tests files
       - path: "_test\\.go"
         linters:
-          - gocyclo
           - errcheck
           - gosec
           - goconst
@@ -108,16 +107,6 @@ linters:
         linters:
           - revive
         text: "package-comments"
-
-      # Exclude gocyclo from Bubble Tea models (Update methods naturally have high complexity)
-      - path: "internal/presentation/models/.*\\.go"
-        linters:
-          - gocyclo
-
-      # Exclude gocyclo from auth service (CreateAuth switch statement has complexity 16)
-      - path: "internal/app/auth_service\\.go"
-        linters:
-          - gocyclo
 
 issues:
   max-issues-per-linter: 0

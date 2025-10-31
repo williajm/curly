@@ -470,34 +470,62 @@ func TestRequestRepository_AuthConfigSerialization(t *testing.T) {
 			}
 
 			// Verify auth config details based on type.
-			switch expected := tt.authConfig.(type) {
-			case *domain.BasicAuth:
-				gotAuth, ok := got.AuthConfig.(*domain.BasicAuth)
-				if !ok {
-					t.Fatalf("expected BasicAuth, got %T", got.AuthConfig)
-				}
-				if gotAuth.Username != expected.Username || gotAuth.Password != expected.Password {
-					t.Errorf("BasicAuth = {%s, %s}, want {%s, %s}",
-						gotAuth.Username, gotAuth.Password, expected.Username, expected.Password)
-				}
-			case *domain.BearerAuth:
-				gotAuth, ok := got.AuthConfig.(*domain.BearerAuth)
-				if !ok {
-					t.Fatalf("expected BearerAuth, got %T", got.AuthConfig)
-				}
-				if gotAuth.Token != expected.Token {
-					t.Errorf("BearerAuth.Token = %s, want %s", gotAuth.Token, expected.Token)
-				}
-			case *domain.APIKeyAuth:
-				gotAuth, ok := got.AuthConfig.(*domain.APIKeyAuth)
-				if !ok {
-					t.Fatalf("expected APIKeyAuth, got %T", got.AuthConfig)
-				}
-				if gotAuth.Key != expected.Key || gotAuth.Value != expected.Value || gotAuth.Location != expected.Location {
-					t.Errorf("APIKeyAuth = {%s, %s, %s}, want {%s, %s, %s}",
-						gotAuth.Key, gotAuth.Value, gotAuth.Location, expected.Key, expected.Value, expected.Location)
-				}
-			}
+			verifyAuthConfig(t, got.AuthConfig, tt.authConfig)
 		})
+	}
+}
+
+// verifyAuthConfig verifies that the retrieved auth config matches the expected one.
+func verifyAuthConfig(t *testing.T, got, expected domain.AuthConfig) {
+	t.Helper()
+
+	switch expected := expected.(type) {
+	case *domain.BasicAuth:
+		verifyBasicAuth(t, got, expected)
+	case *domain.BearerAuth:
+		verifyBearerAuth(t, got, expected)
+	case *domain.APIKeyAuth:
+		verifyAPIKeyAuth(t, got, expected)
+	}
+}
+
+// verifyBasicAuth verifies BasicAuth credentials.
+func verifyBasicAuth(t *testing.T, got domain.AuthConfig, expected *domain.BasicAuth) {
+	t.Helper()
+
+	gotAuth, ok := got.(*domain.BasicAuth)
+	if !ok {
+		t.Fatalf("expected BasicAuth, got %T", got)
+	}
+	if gotAuth.Username != expected.Username || gotAuth.Password != expected.Password {
+		t.Errorf("BasicAuth = {%s, %s}, want {%s, %s}",
+			gotAuth.Username, gotAuth.Password, expected.Username, expected.Password)
+	}
+}
+
+// verifyBearerAuth verifies BearerAuth credentials.
+func verifyBearerAuth(t *testing.T, got domain.AuthConfig, expected *domain.BearerAuth) {
+	t.Helper()
+
+	gotAuth, ok := got.(*domain.BearerAuth)
+	if !ok {
+		t.Fatalf("expected BearerAuth, got %T", got)
+	}
+	if gotAuth.Token != expected.Token {
+		t.Errorf("BearerAuth.Token = %s, want %s", gotAuth.Token, expected.Token)
+	}
+}
+
+// verifyAPIKeyAuth verifies APIKeyAuth credentials.
+func verifyAPIKeyAuth(t *testing.T, got domain.AuthConfig, expected *domain.APIKeyAuth) {
+	t.Helper()
+
+	gotAuth, ok := got.(*domain.APIKeyAuth)
+	if !ok {
+		t.Fatalf("expected APIKeyAuth, got %T", got)
+	}
+	if gotAuth.Key != expected.Key || gotAuth.Value != expected.Value || gotAuth.Location != expected.Location {
+		t.Errorf("APIKeyAuth = {%s, %s, %s}, want {%s, %s, %s}",
+			gotAuth.Key, gotAuth.Value, gotAuth.Location, expected.Key, expected.Value, expected.Location)
 	}
 }

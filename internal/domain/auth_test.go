@@ -276,20 +276,27 @@ func TestAPIKeyAuth(t *testing.T) {
 
 			// If valid, check that the key is in the right location.
 			if tt.wantErr == nil {
-				switch tt.location {
-				case APIKeyLocationHeader:
-					headerValue := req.Header.Get(tt.key)
-					if headerValue != tt.value {
-						t.Errorf("expected header '%s' to be '%s', got '%s'", tt.key, tt.value, headerValue)
-					}
-				case APIKeyLocationQuery:
-					queryValue := req.URL.Query().Get(tt.key)
-					if queryValue != tt.value {
-						t.Errorf("expected query param '%s' to be '%s', got '%s'", tt.key, tt.value, queryValue)
-					}
-				}
+				verifyAPIKeyLocation(t, req, tt.key, tt.value, tt.location)
 			}
 		})
+	}
+}
+
+// verifyAPIKeyLocation checks that the API key was added to the correct location.
+func verifyAPIKeyLocation(t *testing.T, req *http.Request, key, value string, location APIKeyLocation) {
+	t.Helper()
+
+	switch location {
+	case APIKeyLocationHeader:
+		headerValue := req.Header.Get(key)
+		if headerValue != value {
+			t.Errorf("expected header '%s' to be '%s', got '%s'", key, value, headerValue)
+		}
+	case APIKeyLocationQuery:
+		queryValue := req.URL.Query().Get(key)
+		if queryValue != value {
+			t.Errorf("expected query param '%s' to be '%s', got '%s'", key, value, queryValue)
+		}
 	}
 }
 
